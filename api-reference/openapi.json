@@ -1,54 +1,868 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
+    "title": "Quantum Chain Custody API",
+    "description": "Non-custodial custody and orchestration API for Quantum Chain (Dilithium3 post-quantum blockchain).\nProvides Fireblocks-like operating model for institutional integrators:\nmulti-tenant vault/wallet management, transaction lifecycle with policy enforcement,\nexternal (callback-based) signing, webhook-driven event delivery, and full audit trail.\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Quantum Chain Platform Team"
     },
-    "version": "1.0.0"
+    "license": {
+      "name": "LGPL-3.0-or-later"
+    }
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "{baseUrl}/v1",
+      "description": "Custody API v1",
+      "variables": {
+        "baseUrl": {
+          "default": "http://localhost:8080"
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "health",
+      "description": "Liveness and readiness probes"
+    },
+    {
+      "name": "tenants",
+      "description": "Tenant (integrator) management"
+    },
+    {
+      "name": "vaults",
+      "description": "Vault (logical wallet grouping) management"
+    },
+    {
+      "name": "wallets",
+      "description": "Wallet (on-chain address) registration and lookup"
+    },
+    {
+      "name": "transactions",
+      "description": "Transaction lifecycle \u2013 create, sign, approve, reject, query"
+    },
+    {
+      "name": "assets",
+      "description": "Supported asset registry"
+    },
+    {
+      "name": "webhooks",
+      "description": "Webhook endpoint management"
     }
   ],
   "security": [
     {
-      "bearerAuth": []
+      "BearerAPIKey": []
     }
   ],
-  "paths": {
-    "/plants": {
-      "get": {
-        "description": "Returns all plants from the system that the user has access to",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
+  "components": {
+    "securitySchemes": {
+      "BearerAPIKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key authentication. Format: `Bearer {key_id}:{secret}`"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "numericCode",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "INVALID_REQUEST"
+          },
+          "numericCode": {
+            "type": "integer",
+            "description": "Machine-readable numeric error code (Fireblocks-compatible)",
+            "example": 1100
+          },
+          "message": {
+            "type": "string",
+            "example": "missing required field: name"
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      },
+      "PageResponse": {
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string"
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Tenant": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "callbackUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "ipAllowList": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateTenantRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "callbackUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "ipAllowList": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
             }
           }
+        }
+      },
+      "Vault": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "name",
+          "status",
+          "createdAt"
         ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateVaultRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Wallet": {
+        "type": "object",
+        "required": [
+          "id",
+          "vaultId",
+          "tenantId",
+          "assetId",
+          "address",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vaultId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "address": {
+            "type": "string",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          },
+          "publicKey": {
+            "type": "string",
+            "description": "Hex-encoded Dilithium3 public key (1952 bytes)"
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RegisterWalletRequest": {
+        "type": "object",
+        "required": [
+          "assetId",
+          "address",
+          "publicKey"
+        ],
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "address": {
+            "type": "string",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          },
+          "publicKey": {
+            "type": "string",
+            "description": "Hex-encoded Dilithium3 public key (1952 bytes)",
+            "minLength": 3904,
+            "maxLength": 3904
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "VaultAsset": {
+        "type": "object",
+        "required": [
+          "vaultId",
+          "assetId",
+          "totalBalance",
+          "available"
+        ],
+        "properties": {
+          "vaultId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "totalBalance": {
+            "type": "string",
+            "description": "Total balance in wei"
+          },
+          "available": {
+            "type": "string",
+            "description": "Available balance in wei"
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "address": {
+                  "type": "string"
+                },
+                "publicKey": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Asset": {
+        "type": "object",
+        "required": [
+          "id",
+          "symbol",
+          "name",
+          "type",
+          "decimals",
+          "chainId",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "NATIVE",
+              "ERC20"
+            ]
+          },
+          "contractAddress": {
+            "type": "string"
+          },
+          "decimals": {
+            "type": "integer"
+          },
+          "chainId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ]
+          }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "sourceVaultId",
+          "sourceWalletId",
+          "destinationAddr",
+          "assetId",
+          "amount",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "sourceVaultId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceWalletId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "destinationAddr": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Wei-denominated amount as string"
+          },
+          "fee": {
+            "type": "string"
+          },
+          "gasLimit": {
+            "type": "integer",
+            "format": "uint64"
+          },
+          "nonce": {
+            "type": "integer",
+            "format": "uint64"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUBMITTED",
+              "QUEUED",
+              "PENDING_AML_SCREENING",
+              "PENDING_AUTHORIZATION",
+              "APPROVED",
+              "REJECTED",
+              "PENDING_SIGNATURE",
+              "SIGNED",
+              "BROADCASTING",
+              "CONFIRMING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELLED",
+              "BLOCKED"
+            ]
+          },
+          "failureReason": {
+            "type": "string"
+          },
+          "chainTxHash": {
+            "type": "string"
+          },
+          "blockNumber": {
+            "type": "integer",
+            "format": "uint64"
+          },
+          "confirmations": {
+            "type": "integer",
+            "format": "uint64"
+          },
+          "note": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "broadcastAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "confirmedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateTransferRequest": {
+        "type": "object",
+        "required": [
+          "sourceWalletId",
+          "destinationAddr",
+          "assetId",
+          "amount"
+        ],
+        "properties": {
+          "sourceWalletId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "destinationAddr": {
+            "type": "string",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          },
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Wei-denominated amount as string"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Client-provided idempotency/correlation ID"
+          },
+          "note": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SigningPayload": {
+        "type": "object",
+        "required": [
+          "transactionId",
+          "signingHash",
+          "status"
+        ],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "signingHash": {
+            "type": "string",
+            "description": "Hex-encoded 32-byte Keccak256 digest to sign with Dilithium3"
+          },
+          "status": {
+            "type": "string"
+          },
+          "sourceAddress": {
+            "type": "string"
+          },
+          "destinationAddress": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "SubmitSignatureRequest": {
+        "type": "object",
+        "required": [
+          "signature",
+          "publicKey"
+        ],
+        "properties": {
+          "signature": {
+            "type": "string",
+            "description": "Hex-encoded Dilithium3 signature (3293 bytes)"
+          },
+          "publicKey": {
+            "type": "string",
+            "description": "Hex-encoded Dilithium3 public key (1952 bytes)"
+          }
+        }
+      },
+      "Balance": {
+        "type": "object",
+        "required": [
+          "walletId",
+          "assetId",
+          "balance",
+          "blockNumber"
+        ],
+        "properties": {
+          "walletId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "balance": {
+            "type": "string",
+            "description": "Wei-denominated balance as string"
+          },
+          "blockNumber": {
+            "type": "integer",
+            "format": "uint64"
+          }
+        }
+      },
+      "WebhookEndpoint": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "url",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "secret": {
+            "type": "string",
+            "description": "Only returned on creation"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateWebhookRequest": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Event types to subscribe to (empty = all)"
+          }
+        }
+      },
+      "WebhookEvent": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "tenantId",
+          "timestamp",
+          "data"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "transaction.created",
+              "transaction.status_changed",
+              "transaction.completed",
+              "transaction.failed",
+              "deposit.detected",
+              "deposit.confirmed",
+              "approval.required",
+              "approval.decision"
+            ]
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "cursor": {
+        "name": "cursor",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Cursor for keyset pagination"
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 50
+        }
+      },
+      "idempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Idempotency key for safe retries (required for POST/PUT)"
+      }
+    }
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "healthLive",
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness probe",
+        "security": [],
         "responses": {
           "200": {
-            "description": "Plant response",
+            "description": "Service is alive",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "operationId": "healthReady",
+        "tags": [
+          "health"
+        ],
+        "summary": "Readiness probe",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service is ready"
+          },
+          "503": {
+            "description": "Service is not ready"
+          }
+        }
+      }
+    },
+    "/tenants": {
+      "post": {
+        "operationId": "createTenant",
+        "tags": [
+          "tenants"
+        ],
+        "summary": "Create a new tenant",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/idempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTenantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tenant created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tenant"
                 }
               }
             }
           },
           "400": {
-            "description": "Unexpected error",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -59,32 +873,76 @@
           }
         }
       },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
+      "get": {
+        "operationId": "listTenants",
+        "tags": [
+          "tenants"
+        ],
+        "summary": "List tenants",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cursor"
           },
-          "required": true
-        },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "plant response",
+            "description": "Tenant list",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Plant"
+                  "type": "object",
+                  "properties": {
+                    "tenants": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Tenant"
+                      }
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tenants/{id}": {
+      "get": {
+        "operationId": "getTenant",
+        "tags": [
+          "tenants"
+        ],
+        "summary": "Get tenant by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tenant"
                 }
               }
             }
           },
-          "400": {
-            "description": "unexpected error",
+          "404": {
+            "description": "Tenant not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -96,28 +954,939 @@
         }
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+    "/vault/accounts": {
+      "post": {
+        "operationId": "createVault",
+        "tags": [
+          "vaults"
+        ],
+        "summary": "Create a vault",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/idempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVaultRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vault created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vault"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listVaults",
+        "tags": [
+          "vaults"
+        ],
+        "summary": "List vaults for authenticated tenant",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vault list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "vaults": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Vault"
+                      }
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vault/accounts/{vaultAccountId}": {
+      "get": {
+        "operationId": "getVault",
+        "tags": [
+          "vaults"
+        ],
+        "summary": "Get vault by ID",
+        "parameters": [
+          {
+            "name": "vaultAccountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vault details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vault"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vault/accounts/{vaultAccountId}/wallets": {
+      "post": {
+        "operationId": "registerWallet",
+        "tags": [
+          "wallets"
+        ],
+        "summary": "Register an external wallet address",
+        "description": "Non-custodial wallet registration. The caller provides the on-chain address\nand the Dilithium3 public key. The custody service never holds private keys.\n",
+        "parameters": [
+          {
+            "name": "vaultAccountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterWalletRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Wallet registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wallet"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listWalletsByVault",
+        "tags": [
+          "wallets"
+        ],
+        "summary": "List wallets in a vault",
+        "parameters": [
+          {
+            "name": "vaultAccountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wallet list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "wallets": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Wallet"
+                      }
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wallets/{id}": {
+      "get": {
+        "operationId": "getWallet",
+        "tags": [
+          "wallets"
+        ],
+        "summary": "Get wallet by ID",
         "parameters": [
           {
             "name": "id",
             "in": "path",
-            "description": "ID of plant to delete",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wallet details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wallet"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wallets/{walletId}/balance": {
+      "get": {
+        "operationId": "getBalance",
+        "tags": [
+          "wallets"
+        ],
+        "summary": "Get on-chain balance for a wallet",
+        "parameters": [
+          {
+            "name": "walletId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Balance"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions": {
+      "post": {
+        "operationId": "createTransfer",
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Create a new transfer",
+        "description": "Initiates a transfer through the custody lifecycle. The transaction\npasses through policy evaluation and, if approved, enters the\nPENDING_SIGNATURE state. The signing payload must be retrieved\nand signed externally using Dilithium3.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/idempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransferRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Transaction created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listTransactions",
+        "tags": [
+          "transactions"
+        ],
+        "summary": "List transactions for authenticated tenant",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "vaultId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "walletId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "transactions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Transaction"
+                      }
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{id}": {
+      "get": {
+        "operationId": "getTransaction",
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Get transaction by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{id}/signing_payload": {
+      "get": {
+        "operationId": "getSigningPayload",
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Retrieve the signing payload for external signing",
+        "description": "Returns the Keccak256 hash that must be signed with Dilithium3.\nOnly available when the transaction is in PENDING_SIGNATURE state.\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Signing payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SigningPayload"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Transaction not in signable state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{id}/signature": {
+      "post": {
+        "operationId": "submitSignature",
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Submit a Dilithium3 signature for the transaction",
+        "description": "After signing the payload externally, submit the signature and\npublic key. The service validates the signature, assembles the\nsigned transaction, and broadcasts it to the Quantum Chain network.\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitSignatureRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signature accepted, transaction broadcasting",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid signature",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Transaction not in signable state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{id}/approve": {
+      "post": {
+        "operationId": "approveTransaction",
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Approve a transaction pending approval",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction approved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Not in approval state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{id}/reject": {
+      "post": {
+        "operationId": "rejectTransaction",
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Reject a transaction pending approval",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Not in approval state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{id}/cancel": {
+      "post": {
+        "operationId": "cancelTransaction",
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Cancel a transaction that has not been broadcast",
+        "description": "Cancels a transaction in SUBMITTED, PENDING_AUTHORIZATION,\nAPPROVED, or PENDING_SIGNATURE state. Once a transaction has\nbeen broadcast it cannot be cancelled.\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Transaction cannot be cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vault/accounts/{vaultAccountId}/assets": {
+      "get": {
+        "operationId": "listVaultAssets",
+        "tags": [
+          "vaults"
+        ],
+        "summary": "List assets in a vault account",
+        "description": "Returns the asset breakdown for a vault account, aggregating\nwallets by asset with balance summaries.\n",
+        "parameters": [
+          {
+            "name": "vaultAccountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vault asset list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/VaultAsset"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vault/accounts/{vaultAccountId}/assets/{assetId}": {
+      "get": {
+        "operationId": "getVaultAsset",
+        "tags": [
+          "vaults"
+        ],
+        "summary": "Get a specific asset within a vault account",
+        "parameters": [
+          {
+            "name": "vaultAccountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vault asset details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultAsset"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Asset not found in vault",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets": {
+      "get": {
+        "operationId": "listAssets",
+        "tags": [
+          "assets"
+        ],
+        "summary": "List supported assets",
+        "responses": {
+          "200": {
+            "description": "Asset list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "assets": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Asset"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{id}": {
+      "get": {
+        "operationId": "getAsset",
+        "tags": [
+          "assets"
+        ],
+        "summary": "Get asset by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks": {
+      "post": {
+        "operationId": "createWebhook",
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Register a webhook endpoint",
+        "description": "Registers a URL to receive webhook events. The HMAC signing secret\nis returned only in the creation response \u2014 store it securely.\nPayloads are signed with HMAC-SHA256 and delivered in the\nX-Webhook-Signature header.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/idempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebhookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook endpoint created (includes secret)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpoint"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listWebhooks",
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "List webhook endpoints for authenticated tenant",
+        "responses": {
+          "200": {
+            "description": "Webhook endpoint list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "endpoints": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WebhookEndpoint"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/{id}": {
+      "delete": {
+        "operationId": "deleteWebhook",
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Delete a webhook endpoint",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
         "responses": {
           "204": {
-            "description": "Plant deleted",
-            "content": {}
+            "description": "Webhook endpoint deleted"
           },
-          "400": {
-            "description": "unexpected error",
+          "404": {
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -127,90 +1896,6 @@
             }
           }
         }
-      }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
-      "post": {
-        "description": "Information about a new plant added to the store",
-        "requestBody": {
-          "description": "Plant added to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
-          },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
-              }
-            }
-          }
-        ]
-      },
-      "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
       }
     }
   }

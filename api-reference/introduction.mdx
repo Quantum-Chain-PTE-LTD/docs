@@ -1,33 +1,92 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: "API reference"
+description: "Quantum Chain Custody API — complete endpoint reference"
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+The Custody API exposes 27 endpoints for managing tenants, vault accounts, wallets, transactions, assets, and webhooks on the Quantum Chain network.
 
-## Welcome
+## Base URL
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+```
+{baseUrl}/v1
+```
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+Default local development: `http://localhost:8080/v1`
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All endpoints except `/healthz` and `/readyz` require a Bearer API key:
+
+```
+Authorization: Bearer <key_id>:<secret>
+```
+
+See [Authentication](/authentication) for details on credential format and IP allowlisting.
+
+## Request format
+
+- Content-Type: `application/json`
+- All request bodies are JSON objects
+- Path parameters use `{id}` notation
+- Query parameters support pagination via `page` and `page_size`
+
+## Response format
+
+Successful responses return the resource directly:
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+{
+  "id": "tx_abc123",
+  "status": "COMPLETED",
+  "amount": "10.0",
+  "created_at": "2026-03-19T10:00:00Z"
+}
 ```
+
+List endpoints return paginated responses:
+
+```json
+{
+  "data": [...],
+  "page": 1,
+  "page_size": 20,
+  "total": 142
+}
+```
+
+## Error format
+
+Errors include a numeric code and human-readable message:
+
+```json
+{
+  "error": {
+    "code": 1001,
+    "message": "Invalid API key"
+  }
+}
+```
+
+### Error code ranges
+
+| Range | Category |
+|-------|----------|
+| `1000–1099` | Authentication and authorization |
+| `1100–1199` | Validation and request errors |
+| `1200–1299` | Policy violations |
+| `1300–1399` | Transaction errors |
+| `1400–1499` | Webhook errors |
+| `1500–1599` | Asset errors |
+| `1600–1699` | Internal errors |
+
+## OpenAPI specification
+
+The complete API is defined in an OpenAPI 3.1.0 specification. All endpoint pages below are auto-generated from this spec.
+
+<Card
+  title="OpenAPI Specification"
+  icon="file-code"
+  href="https://github.com/Quantum-Chain-PTE-LTD/go-quantum-chain/blob/main/custody/api/openapi.yaml"
+>
+  View the source OpenAPI specification
+</Card>

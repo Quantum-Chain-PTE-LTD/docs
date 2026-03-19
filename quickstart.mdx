@@ -1,80 +1,193 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Create your first vault, register a wallet, and submit a transaction"
 ---
 
-## Get started in three steps
+This guide walks you through a complete integration flow: authenticate, create organizational resources, and submit your first transaction on Quantum Chain.
 
-Get your documentation site running locally and make your first customization.
+## Prerequisites
 
-### Step 1: Set up your local environment
+- A running Custody API instance — see [Development](/development) for local setup
+- An API key pair — contact the platform team or use the admin CLI
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+<Note>
+All examples use `http://localhost:8080` as the base URL. Replace with your deployment URL in production.
+</Note>
 
-### Step 2: Deploy your changes
+## Step 1: Authenticate
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+Every request requires a Bearer token in the format `key_id:secret`.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+```bash
+export CUSTODY_API_KEY="your_key_id:your_secret"
+export BASE_URL="http://localhost:8080/v1"
+```
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+Test your credentials:
 
-### Step 3: Go live
+```bash
+curl -s "$BASE_URL/healthz" | jq .
+```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+```json
+{
+  "status": "healthy"
+}
+```
+
+## Step 2: Create a tenant
+
+A tenant is an isolated organizational unit. All vaults, wallets, and transactions belong to a tenant.
+
+```bash
+curl -s -X POST "$BASE_URL/tenants" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "My Organization"}' | jq .
+```
+
+```json
+{
+  "id": "tnt_abc123",
+  "name": "My Organization",
+  "status": "active",
+  "created_at": "2026-03-19T10:00:00Z"
+}
+```
+
+Save your tenant ID:
+
+```bash
+export TENANT_ID="tnt_abc123"
+```
+
+## Step 3: Create a vault account
+
+A vault account groups related wallets together.
+
+```bash
+curl -s -X POST "$BASE_URL/vault/accounts" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"name\": \"Treasury\", \"tenant_id\": \"$TENANT_ID\"}" | jq .
+```
+
+```json
+{
+  "id": "va_def456",
+  "name": "Treasury",
+  "tenant_id": "tnt_abc123",
+  "created_at": "2026-03-19T10:01:00Z"
+}
+```
+
+## Step 4: Register a wallet
+
+Register an external Quantum Chain wallet address. The custody API does not generate keys — you provide the Dilithium3 public key and address from your external signer.
+
+```bash
+curl -s -X POST "$BASE_URL/vault/accounts/va_def456/wallets" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "0x1234...abcd",
+    "public_key": "<base64-encoded-dilithium3-public-key>",
+    "name": "Hot Wallet"
+  }' | jq .
+```
+
+```json
+{
+  "id": "wlt_ghi789",
+  "address": "0x1234...abcd",
+  "vault_account_id": "va_def456",
+  "name": "Hot Wallet",
+  "created_at": "2026-03-19T10:02:00Z"
+}
+```
+
+## Step 5: Create a transaction
+
+Submit a transfer. The transaction enters `PENDING_SIGNATURE` status and waits for your external signer.
+
+```bash
+curl -s -X POST "$BASE_URL/transactions" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "asset_id": "QC_NATIVE",
+    "source": {
+      "type": "VAULT_ACCOUNT",
+      "id": "va_def456"
+    },
+    "destination": {
+      "type": "ONE_TIME_ADDRESS",
+      "one_time_address": {
+        "address": "0x5678...efgh"
+      }
+    },
+    "amount": "1.5",
+    "note": "First transfer"
+  }' | jq .
+```
+
+```json
+{
+  "id": "tx_jkl012",
+  "status": "PENDING_SIGNATURE",
+  "asset_id": "QC_NATIVE",
+  "amount": "1.5",
+  "created_at": "2026-03-19T10:03:00Z"
+}
+```
+
+## Step 6: Sign the transaction
+
+Retrieve the signing payload and submit the Dilithium3 signature from your external signer.
+
+```bash
+# Get the unsigned digest
+curl -s "$BASE_URL/transactions/tx_jkl012/signing_payload" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY" | jq .
+
+# Submit the signature
+curl -s -X POST "$BASE_URL/transactions/tx_jkl012/signature" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "signature": "<base64-encoded-dilithium3-signature>",
+    "signer_public_key": "<base64-encoded-public-key>"
+  }' | jq .
+```
+
+The transaction moves through `SIGNED` → `BROADCASTING` → `CONFIRMING` → `COMPLETED`.
+
+## Step 7: Verify completion
+
+Poll the transaction or set up a [webhook](/concepts/webhooks) to receive status updates.
+
+```bash
+curl -s "$BASE_URL/transactions/tx_jkl012" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY" | jq .status
+```
+
+```json
+"COMPLETED"
+```
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Authentication" icon="key" href="/authentication">
+    Set up credentials and IP allowlisting for production.
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/concepts/webhooks">
+    Get real-time notifications instead of polling.
+  </Card>
+  <Card title="Policies" icon="shield-check" href="/concepts/policies">
+    Enforce spending limits and approval workflows.
+  </Card>
+  <Card title="API reference" icon="terminal" href="/api-reference/introduction">
+    Explore all available endpoints.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

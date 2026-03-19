@@ -1,12 +1,58 @@
 ---
-title: 'Development'
-description: 'Preview changes locally to update your docs'
+title: "Development"
+description: "Set up the Custody API locally and preview documentation changes"
 ---
+
+## Custody API local setup
+
+<Steps>
+<Step title="Start dependencies">
+
+The Custody API requires PostgreSQL 16. Use Docker Compose from the repository root:
+
+```bash
+cd custody
+docker compose up -d postgres
+```
+
+</Step>
+
+<Step title="Configure environment">
+
+Copy the example environment file and adjust values:
+
+```bash
+cp .env.example .env
+```
+
+Key variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | `postgres://custody:custody@localhost:5432/custody` | PostgreSQL connection string |
+| `HTTP_ADDR` | `:8080` | API listen address |
+| `LOG_LEVEL` | `info` | Log verbosity |
+| `HMAC_SECRET` | — | Webhook signing secret |
+
+</Step>
+
+<Step title="Run the API">
+
+```bash
+go run ./cmd/custody-api
+```
+
+The API will be available at `http://localhost:8080/v1`.
+
+</Step>
+</Steps>
+
+## Documentation preview
 
 <Info>
   **Prerequisites**:
   - Node.js version 19 or higher
-  - A docs repository with a `docs.json` file
+  - The `custody/docs` directory
 </Info>
 
 Follow these steps to install and run Mintlify on your operating system.

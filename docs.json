@@ -1,13 +1,14 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Quantum Chain Custody API",
   "colors": {
     "primary": "#16A34A",
     "light": "#07C983",
     "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
+  "openapi": ["/api-reference/openapi.json"],
   "navigation": {
     "tabs": [
       {
@@ -18,31 +19,23 @@
             "pages": [
               "index",
               "quickstart",
+              "authentication",
+              "architecture"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/vaults-wallets",
+              "concepts/transactions",
+              "concepts/policies",
+              "concepts/webhooks"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
               "development"
-            ]
-          },
-          {
-            "group": "Customization",
-            "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
             ]
           }
         ]
@@ -51,18 +44,71 @@
         "tab": "API reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
             "pages": [
               "api-reference/introduction"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Health",
             "pages": [
-              "api-reference/endpoint/get",
+              "api-reference/endpoint/health",
+              "api-reference/endpoint/readiness"
+            ]
+          },
+          {
+            "group": "Tenants",
+            "pages": [
               "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/endpoint/list-tenants",
+              "api-reference/endpoint/get"
+            ]
+          },
+          {
+            "group": "Vaults",
+            "pages": [
+              "api-reference/endpoint/create-vault",
+              "api-reference/endpoint/list-vaults",
+              "api-reference/endpoint/get-vault"
+            ]
+          },
+          {
+            "group": "Wallets",
+            "pages": [
+              "api-reference/endpoint/register-wallet",
+              "api-reference/endpoint/list-wallets",
+              "api-reference/endpoint/get-wallet",
+              "api-reference/endpoint/get-balance"
+            ]
+          },
+          {
+            "group": "Transactions",
+            "pages": [
+              "api-reference/endpoint/create-transaction",
+              "api-reference/endpoint/list-transactions",
+              "api-reference/endpoint/get-transaction",
+              "api-reference/endpoint/get-signing-payload",
+              "api-reference/endpoint/submit-signature",
+              "api-reference/endpoint/approve-transaction",
+              "api-reference/endpoint/reject-transaction",
+              "api-reference/endpoint/cancel-transaction"
+            ]
+          },
+          {
+            "group": "Assets",
+            "pages": [
+              "api-reference/endpoint/list-vault-assets",
+              "api-reference/endpoint/get-vault-asset",
+              "api-reference/endpoint/list-assets",
+              "api-reference/endpoint/get-asset"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api-reference/endpoint/webhook",
+              "api-reference/endpoint/list-webhooks",
+              "api-reference/endpoint/delete"
             ]
           }
         ]
@@ -71,14 +117,9 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "GitHub",
+          "href": "https://github.com/Quantum-Chain-PTE-LTD",
+          "icon": "github"
         }
       ]
     }
@@ -91,13 +132,13 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:support@quantumchain.io"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://dashboard.quantumchain.io"
     }
   },
   "contextual": {
@@ -114,9 +155,7 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/Quantum-Chain-PTE-LTD"
     }
   }
 }

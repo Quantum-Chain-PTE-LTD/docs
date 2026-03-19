@@ -1,0 +1,97 @@
+---
+title: "Vaults & wallets"
+description: "Organize Quantum Chain addresses into vault accounts"
+---
+
+The Custody API uses a two-level hierarchy to organize blockchain addresses: **vault accounts** contain **wallets**, and wallets hold assets on the Quantum Chain network.
+
+## Vault accounts
+
+A vault account is a logical container that groups related wallets. Common patterns:
+
+- **By purpose** — "Treasury", "Operations", "Cold Storage"
+- **By department** — "Engineering", "Finance", "Trading"
+- **By client** — one vault per end customer in a platform model
+
+### Create a vault account
+
+```bash
+curl -X POST "$BASE_URL/vault/accounts" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Treasury", "tenant_id": "tnt_abc123"}'
+```
+
+### List vault accounts
+
+```bash
+curl "$BASE_URL/vault/accounts" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY"
+```
+
+## Wallets
+
+A wallet represents a single Quantum Chain address within a vault account. Each wallet has:
+
+- **Address** — the Quantum Chain hex address
+- **Public key** — the Dilithium3 public key associated with the address
+- **Name** — an optional human-readable label
+
+### Non-custodial registration
+
+Since the Custody API is non-custodial, you **register** existing wallets rather than having the API generate keys. You provide the address and Dilithium3 public key from your external key management system.
+
+```bash
+curl -X POST "$BASE_URL/vault/accounts/{vaultAccountId}/wallets" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "0x1234...abcd",
+    "public_key": "<base64-dilithium3-public-key>",
+    "name": "Hot Wallet"
+  }'
+```
+
+### Query wallet balance
+
+```bash
+curl "$BASE_URL/wallets/{walletId}/balance" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY"
+```
+
+## Assets
+
+Assets represent token types held in wallets. The Quantum Chain native token is `QC_NATIVE`.
+
+### Vault-level asset summary
+
+Get aggregated balances across all wallets in a vault:
+
+```bash
+curl "$BASE_URL/vault/accounts/{vaultAccountId}/assets" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY"
+```
+
+### Global asset catalog
+
+List all supported assets:
+
+```bash
+curl "$BASE_URL/assets" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY"
+```
+
+## Hierarchy diagram
+
+```
+Tenant
+└── Vault Account (e.g., "Treasury")
+    ├── Wallet A (0x1234...abcd)
+    │   └── QC_NATIVE: 150.0 QC
+    └── Wallet B (0x5678...efgh)
+        └── QC_NATIVE: 50.0 QC
+```
+
+<Info>
+Each wallet belongs to exactly one vault account. A vault account belongs to exactly one tenant. Cross-tenant access is not permitted.
+</Info>

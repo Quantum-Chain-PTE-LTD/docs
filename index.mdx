@@ -1,97 +1,80 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Quantum Chain Custody API"
+description: "Non-custodial, Fireblocks-compatible custody and orchestration API for the post-quantum blockchain"
 ---
 
-## Setting up
+Build on a **post-quantum secure** blockchain with an API you already know. The Quantum Chain Custody API provides a Fireblocks-like operating model — multi-tenant vault management, policy-enforced transactions, and webhook-driven event delivery — powered by Dilithium3 / ML-DSA-65 signatures.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
+## Get started
 
 <Columns cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="Quickstart"
+    icon="rocket"
+    href="/quickstart"
   >
-    Edit your docs locally and preview them in real time.
+    Create your first vault, register a wallet, and submit a transaction in minutes.
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="Authentication"
+    icon="key"
+    href="/authentication"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    Set up API credentials and secure your integration.
   </Card>
   <Card
-    title="API documentation"
+    title="Architecture"
+    icon="diagram-project"
+    href="/architecture"
+  >
+    Understand the non-custodial signing model and transaction lifecycle.
+  </Card>
+  <Card
+    title="API reference"
     icon="terminal"
     href="/api-reference/introduction"
   >
-    Auto-generate API documentation from OpenAPI specifications.
+    Explore all 27 endpoints with request/response examples.
   </Card>
 </Columns>
 
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
+## Key concepts
 
 <Columns cols={2}>
   <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
+    title="Vaults & wallets"
+    icon="vault"
+    href="/concepts/vaults-wallets"
   >
-    Use MDX to style your docs pages.
+    Organize addresses into vault accounts with multi-wallet support.
   </Card>
   <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
+    title="Transactions"
+    icon="arrow-right-arrow-left"
+    href="/concepts/transactions"
   >
-    Add sample code to demonstrate how to use your product.
+    Full lifecycle from creation through signing to on-chain confirmation.
   </Card>
   <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
+    title="Policies"
+    icon="shield-check"
+    href="/concepts/policies"
   >
-    Display images and other media.
+    Enforce spending limits, whitelists, and approval workflows.
   </Card>
   <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
+    title="Webhooks"
+    icon="bell"
+    href="/concepts/webhooks"
   >
-    Write once and reuse across your docs.
+    Receive HMAC-signed event notifications for every state change.
   </Card>
 </Columns>
 
-## Need inspiration?
+## Why Quantum Chain Custody?
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+- **Post-quantum security** — Dilithium3 / ML-DSA-65 signatures protect against quantum computing threats
+- **Non-custodial** — your keys never touch our servers; signing happens via secure callback
+- **Fireblocks-compatible** — familiar operating model for institutional integrators
+- **Policy engine** — configurable rules enforce compliance before transactions are broadcast
+- **Webhook delivery** — HMAC-SHA256 signed events with exponential backoff and dead-letter handling

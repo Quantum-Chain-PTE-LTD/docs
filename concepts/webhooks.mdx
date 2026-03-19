@@ -1,0 +1,151 @@
+---
+title: "Webhooks"
+description: "Receive HMAC-signed event notifications for every state change"
+---
+
+Webhooks deliver real-time notifications to your application when events occur in the Custody API. Every webhook delivery is signed with HMAC-SHA256 so you can verify authenticity.
+
+## Registering a webhook endpoint
+
+```bash
+curl -X POST "$BASE_URL/webhooks" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://your-app.example.com/webhooks/custody",
+    "events": ["transaction.*", "deposit.*"]
+  }'
+```
+
+```json
+{
+  "id": "wh_abc123",
+  "url": "https://your-app.example.com/webhooks/custody",
+  "events": ["transaction.*", "deposit.*"],
+  "secret": "whsec_...",
+  "status": "active",
+  "created_at": "2026-03-19T10:00:00Z"
+}
+```
+
+<Warning>
+Save the `secret` — it is shown only once. You need it to verify webhook signatures.
+</Warning>
+
+## Event types
+
+| Event | Trigger |
+|-------|---------|
+| `transaction.created` | New transaction submitted |
+| `transaction.status_changed` | Transaction state transition |
+| `transaction.completed` | Transaction confirmed on-chain |
+| `transaction.failed` | Transaction reverted or broadcast failure |
+| `transaction.approval_required` | Policy requires manual approval |
+| `deposit.detected` | Inbound transfer detected on a registered wallet |
+| `deposit.confirmed` | Inbound transfer confirmed with sufficient depth |
+
+Use `*` wildcards in event subscriptions — `transaction.*` subscribes to all transaction events.
+
+## Webhook payload format
+
+```json
+{
+  "id": "evt_xyz789",
+  "type": "transaction.status_changed",
+  "timestamp": "2026-03-19T10:05:00Z",
+  "data": {
+    "transaction_id": "tx_jkl012",
+    "status": "COMPLETED",
+    "previous_status": "CONFIRMING"
+  }
+}
+```
+
+## HMAC-SHA256 verification
+
+Every delivery includes a signature header:
+
+```
+X-Webhook-Signature: sha256=<hex-encoded-hmac>
+```
+
+Verify the signature in your handler:
+
+```python
+import hmac
+import hashlib
+
+def verify_webhook(payload_body, signature_header, secret):
+    expected = hmac.new(
+        secret.encode(),
+        payload_body,
+        hashlib.sha256
+    ).hexdigest()
+    received = signature_header.replace("sha256=", "")
+    return hmac.compare_digest(expected, received)
+```
+
+```go
+func verifyWebhook(body []byte, signatureHeader, secret string) bool {
+    mac := hmac.New(sha256.New, []byte(secret))
+    mac.Write(body)
+    expected := hex.EncodeToString(mac.Sum(nil))
+    received := strings.TrimPrefix(signatureHeader, "sha256=")
+    return hmac.Equal([]byte(expected), []byte(received))
+}
+```
+
+<Warning>
+Always verify the HMAC signature before processing a webhook. Reject unverified deliveries to prevent spoofing.
+</Warning>
+
+## Retry behavior
+
+Failed deliveries are retried with exponential backoff:
+
+| Attempt | Delay |
+|---------|-------|
+| 1 | Immediate |
+| 2 | 30 seconds |
+| 3 | 2 minutes |
+| 4 | 10 minutes |
+| 5 | 1 hour |
+| 6 | 6 hours |
+
+After all retries are exhausted, the event is moved to the **dead-letter queue** for manual inspection.
+
+### What counts as a failure?
+
+- HTTP response status outside `200–299`
+- Connection timeout (10 seconds)
+- DNS resolution failure
+- TLS handshake failure
+
+## Managing endpoints
+
+```bash
+# List all webhook endpoints
+curl "$BASE_URL/webhooks" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY"
+
+# Delete a webhook endpoint
+curl -X DELETE "$BASE_URL/webhooks/{id}" \
+  -H "Authorization: Bearer $CUSTODY_API_KEY"
+```
+
+## Best practices
+
+<CardGroup cols={2}>
+  <Card title="Respond quickly" icon="bolt">
+    Return `200 OK` immediately and process the event asynchronously. Slow responses trigger retries.
+  </Card>
+  <Card title="Handle duplicates" icon="clone">
+    Use the `id` field to deduplicate — retries may deliver the same event multiple times.
+  </Card>
+  <Card title="Verify signatures" icon="shield-check">
+    Always validate HMAC-SHA256 before processing. Reject unsigned or invalid deliveries.
+  </Card>
+  <Card title="Monitor dead letters" icon="triangle-exclamation">
+    Set up alerting on dead-letter events to catch configuration issues early.
+  </Card>
+</CardGroup>
