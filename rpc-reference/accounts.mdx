@@ -1,0 +1,178 @@
+---
+title: "Accounts"
+description: "Query balances, code, storage, proofs, and block receipts"
+---
+
+## qc_accounts
+
+Returns the list of addresses managed by the node (unlocked accounts).
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_accounts","params":[],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": ["0xff81e5c74e14db5b4ee407d66b1b063c8f305c51"]
+}
+```
+
+---
+
+## qc_getBalance
+
+Returns the balance of an address in wei.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `address` | `string` | 20-byte address (hex) |
+| `blockNumber` | `string` | Block number (hex) or tag |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getBalance","params":["0xff81e5c74e14db5b4ee407d66b1b063c8f305c51","latest"],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0x56bc75e2d63100000"
+}
+```
+
+<Tip>
+  Convert wei to QC: divide by 10^18. The result above is 100 QC.
+</Tip>
+
+---
+
+## qc_getCode
+
+Returns the contract bytecode at a given address. Returns `0x` for externally owned accounts.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `address` | `string` | 20-byte address (hex) |
+| `blockNumber` | `string` | Block number (hex) or tag |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getCode","params":["0x1234567890abcdef1234567890abcdef12345678","latest"],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0x6080604052..."
+}
+```
+
+---
+
+## qc_getStorageAt
+
+Returns the value at a storage position for a given address.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `address` | `string` | 20-byte address (hex) |
+| `storageKey` | `string` | Storage slot position (hex, 32 bytes) |
+| `blockNumber` | `string` | Block number (hex) or tag |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getStorageAt","params":["0x1234567890abcdef1234567890abcdef12345678","0x0","latest"],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+}
+```
+
+---
+
+## qc_getProof
+
+Returns the Merkle proof for an account and optionally its storage keys. Useful for light client verification.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `address` | `string` | 20-byte address (hex) |
+| `storageKeys` | `string[]` | Array of storage keys to prove |
+| `blockNumber` | `string` | Block number (hex) or tag |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getProof","params":["0xff81e5c74e14db5b4ee407d66b1b063c8f305c51",["0x0"],"latest"],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "address": "0xff81e5c74e14db5b4ee407d66b1b063c8f305c51",
+    "balance": "0x56bc75e2d63100000",
+    "codeHash": "0xc5d2...01",
+    "nonce": "0x0",
+    "storageHash": "0x56e8...ab",
+    "accountProof": ["0x..."],
+    "storageProof": [
+      {
+        "key": "0x0",
+        "value": "0x1",
+        "proof": ["0x..."]
+      }
+    ]
+  }
+}
+```
+
+---
+
+## qc_getBlockReceipts
+
+Returns all transaction receipts for a given block.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockNumber` | `string` | Block number (hex) or tag |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getBlockReceipts","params":["latest"],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    {
+      "transactionHash": "0x789...abc",
+      "transactionIndex": "0x0",
+      "blockHash": "0xabc...123",
+      "blockNumber": "0x1a4",
+      "from": "0xff81...c51",
+      "to": "0x5678...efgh",
+      "gasUsed": "0x5208",
+      "status": "0x1",
+      "logs": []
+    }
+  ]
+}
+```

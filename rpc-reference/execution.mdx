@@ -1,0 +1,94 @@
+---
+title: "Execution"
+description: "Read-only contract calls, access list generation, and sync status"
+---
+
+## qc_call
+
+Executes a message call immediately without creating a transaction on the blockchain. Commonly used to read data from smart contracts.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `txObject` | `object` | Transaction call object |
+| `blockNumber` | `string` | Block number (hex) or tag |
+
+The transaction call object supports these fields:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `from` | `string` | No | Sender address |
+| `to` | `string` | Yes | Contract address |
+| `gas` | `string` | No | Gas limit (hex) |
+| `gasPrice` | `string` | No | Gas price (hex) |
+| `value` | `string` | No | Value in wei (hex) |
+| `data` | `string` | No | ABI-encoded call data (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "qc_call",
+    "params": [{
+      "to": "0x1234567890abcdef1234567890abcdef12345678",
+      "data": "0x70a08231000000000000000000000000ff81e5c74e14db5b4ee407d66b1b063c8f305c51"
+    }, "latest"],
+    "id": 1
+  }'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0x00000000000000000000000000000000000000000000000000000000000003e8"
+}
+```
+
+<Tip>
+  The `data` field above is an ABI-encoded `balanceOf(address)` call. Use `cast calldata` or an ABI encoder to build these.
+</Tip>
+
+---
+
+## qc_createAccessList
+
+Creates an EIP-2930 access list for a transaction. The access list identifies storage slots and addresses the transaction will access, which can reduce gas costs.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `txObject` | `object` | Transaction call object |
+| `blockNumber` | `string` | Block number (hex) or tag |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "qc_createAccessList",
+    "params": [{
+      "from": "0xff81e5c74e14db5b4ee407d66b1b063c8f305c51",
+      "to": "0x1234567890abcdef1234567890abcdef12345678",
+      "data": "0x70a08231000000000000000000000000ff81e5c74e14db5b4ee407d66b1b063c8f305c51"
+    }, "latest"],
+    "id": 1
+  }'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "accessList": [
+      {
+        "address": "0x1234567890abcdef1234567890abcdef12345678",
+        "storageKeys": [
+          "0x0000000000000000000000000000000000000000000000000000000000000001"
+        ]
+      }
+    ],
+    "gasUsed": "0x5c68"
+  }
+}
+```

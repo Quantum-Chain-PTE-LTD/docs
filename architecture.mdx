@@ -9,7 +9,7 @@ The Quantum Chain Custody API is a **non-custodial** orchestration layer. It man
 
 Unlike traditional custodial solutions, the Custody API delegates all signing to your infrastructure. This means:
 
-- **You control the keys** — Dilithium3 private keys live in your HSM, secure enclave, or key management system
+- **You control the keys** — post-quantum private keys live in your HSM, secure enclave, or key management system
 - **The API orchestrates** — it creates transactions, enforces policies, and broadcasts signed transactions to the Quantum Chain network
 - **Signing is a callback** — when a transaction needs signing, you retrieve the payload, sign it externally, and submit the signature back
 
@@ -63,7 +63,7 @@ stateDiagram-v2
 | `CREATED` | Just created, policy evaluation imminent |
 | `PENDING_APPROVAL` | Awaiting manual approval per policy |
 | `APPROVED` | Approved, transitioning to signing |
-| `SIGNING_REQUESTED` | Ready for external Dilithium3 signature |
+| `SIGNING_REQUESTED` | Ready for external post-quantum signature |
 | `SIGNED` | Signature received and verified |
 | `BROADCASTING` | Submitted to Quantum Chain nodes |
 | `CONFIRMING` | Included in a block, waiting for confirmation depth |
@@ -88,10 +88,10 @@ A typical transfer follows this sequence:
     Call `GET /v1/transactions/{id}/signing_payload` to get the unsigned transaction digest as a hex-encoded byte array.
   </Step>
   <Step title="Sign externally">
-    Sign the digest with your Dilithium3 private key using your key management solution.
+    Sign the digest with your post-quantum private key using your key management solution.
   </Step>
   <Step title="Submit signature">
-    Call `POST /v1/transactions/{id}/signature` with the base64-encoded Dilithium3 signature and the signer's public key. The API verifies the signature before accepting it.
+    Call `POST /v1/transactions/{id}/signature` with the base64-encoded signature and the signer's public key. The API verifies the signature before accepting it.
   </Step>
   <Step title="Broadcast and confirm">
     The API broadcasts the signed transaction to the Quantum Chain network via the node pool and tracks confirmation depth.
@@ -122,15 +122,13 @@ The API supports multiple tenants with full isolation:
 - Cross-tenant access is prevented at the middleware layer
 - Tenant context is extracted from the API key and propagated through all service calls
 
-## Dilithium3 signatures
+## Post-quantum signatures
 
-Quantum Chain uses **Dilithium3 / ML-DSA-65**, the NIST post-quantum digital signature standard:
+Quantum Chain uses a **post-quantum digital signature scheme** offering security equivalent to ~192-bit classical cryptography:
 
 | Property | Value |
 |----------|-------|
-| Signature size | 3,293 bytes |
-| Public key size | 1,952 bytes |
-| Security level | NIST Level 3 |
+| Security | ~192-bit classical equivalent |
 | Digest size | 32 bytes |
 
 The API verifies signatures server-side before broadcasting to ensure only valid transactions reach the network.

@@ -1,0 +1,93 @@
+---
+title: "JSON-RPC reference"
+description: "Connect to a Quantum Chain node and call the qc_* JSON-RPC namespace"
+---
+
+The Quantum Chain node exposes a standard **JSON-RPC 2.0** interface over HTTP and WebSocket. All methods in the Ethereum `eth_*` namespace are also available under the `qc_*` namespace — the `qc_*` variant is recommended for Quantum Chain integrations.
+
+<Note>
+  Every `qc_*` method has an identical `eth_*` counterpart. If your tooling only supports `eth_*`, it works the same way.
+</Note>
+
+## Connecting
+
+**HTTP**
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_blockNumber","params":[],"id":1}'
+```
+
+**WebSocket**
+
+```bash
+wscat -c ws://localhost:8546
+> {"jsonrpc":"2.0","method":"qc_blockNumber","params":[],"id":1}
+```
+
+## Enabling RPC modules
+
+By default, the node only exposes `net` and `web3` modules. Enable additional modules with CLI flags:
+
+```bash
+geth --http --http.api eth,qc,net,web3,txpool --ws --ws.api eth,qc,net,web3
+```
+
+## Namespaces
+
+| Namespace | Description |
+|-----------|-------------|
+| `qc` | Quantum Chain native — accounts, blocks, transactions, gas, execution |
+| `eth` | Ethereum-compatible alias (identical to `qc`) |
+| `net` | Network info — peer count, version, listening status |
+| `web3` | Utilities — client version, SHA3 |
+| `txpool` | Transaction pool inspection |
+| `debug` | Debugging and tracing |
+| `admin` | Node administration and peer management |
+| `personal` | Account management (unlock, sign) |
+
+## Request format
+
+Every request follows JSON-RPC 2.0:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "qc_blockNumber",
+  "params": [],
+  "id": 1
+}
+```
+
+## Block number tags
+
+Several methods accept a block identifier instead of a number:
+
+| Tag | Meaning |
+|-----|---------|
+| `"latest"` | Most recent mined block |
+| `"pending"` | Pending state/transactions |
+| `"earliest"` | Genesis block |
+| `"finalized"` | Most recent finalized block |
+| `"safe"` | Most recent safe block |
+
+## Reference pages
+
+<CardGroup cols={2}>
+  <Card title="Blocks" icon="cube" href="/rpc-reference/blocks">
+    Chain ID, block number, headers, block lookups, uncle queries
+  </Card>
+  <Card title="Accounts" icon="wallet" href="/rpc-reference/accounts">
+    Balances, code, storage, proofs, receipts
+  </Card>
+  <Card title="Transactions" icon="arrow-right-arrow-left" href="/rpc-reference/transactions">
+    Send, query, sign, receipts, pending pool
+  </Card>
+  <Card title="Gas & fees" icon="gas-pump" href="/rpc-reference/gas-fees">
+    Gas price, priority fee, fee history, estimation
+  </Card>
+  <Card title="Execution" icon="play" href="/rpc-reference/execution">
+    Read-only calls, access lists, sync status
+  </Card>
+</CardGroup>

@@ -100,7 +100,7 @@ curl -s -X POST "$BASE_URL/vault/accounts" \
 
 ## Step 4: Register a wallet
 
-Register an external Quantum Chain wallet address. The custody API does not generate keys — you provide the Dilithium3 public key and address from your external signer.
+Register an external Quantum Chain wallet address. The custody API does not generate keys — you provide the public key and address from your external signer.
 
 ```bash
 curl -s -X POST "$BASE_URL/vault/accounts/va_def456/wallets" \
@@ -108,7 +108,7 @@ curl -s -X POST "$BASE_URL/vault/accounts/va_def456/wallets" \
   -H "Content-Type: application/json" \
   -d '{
     "address": "0x1234...abcd",
-    "public_key": "<base64-encoded-dilithium3-public-key>",
+    "public_key": "<base64-encoded-public-key>",
     "name": "Hot Wallet"
   }' | jq .
 ```
@@ -175,7 +175,7 @@ print(f"Transaction ID: {tx.id}, Status: {tx.status}")
 
 ## Step 6: Sign the transaction
 
-Retrieve the signing payload and submit the Dilithium3 signature from your external signer.
+Retrieve the signing payload and submit the signature from your external signer.
 
 <CodeGroup>
 ```bash cURL
@@ -188,7 +188,7 @@ curl -s -X POST "$BASE_URL/transactions/tx_jkl012/signature" \
   -H "Authorization: Bearer $CUSTODY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "signature": "<base64-encoded-dilithium3-signature>",
+    "signature": "<base64-encoded-signature>",
     "signer_public_key": "<base64-encoded-public-key>"
   }' | jq .
 ```

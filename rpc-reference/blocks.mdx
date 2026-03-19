@@ -1,0 +1,225 @@
+---
+title: "Blocks"
+description: "Query chain ID, block numbers, headers, full blocks, and uncle data"
+---
+
+## qc_chainId
+
+Returns the EIP-155 chain ID. Quantum Chain mainnet is `20803` (`0x5143`).
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_chainId","params":[],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0x5143"
+}
+```
+
+---
+
+## qc_blockNumber
+
+Returns the number of the most recent block.
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_blockNumber","params":[],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0x1a4"
+}
+```
+
+---
+
+## qc_syncing
+
+Returns `false` if the node is fully synced, or an object with sync progress.
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_syncing","params":[],"id":1}'
+```
+
+**When synced:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": false
+}
+```
+
+**When syncing:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "startingBlock": "0x0",
+    "currentBlock": "0x1a4",
+    "highestBlock": "0x3e8"
+  }
+}
+```
+
+---
+
+## qc_getBlockByNumber
+
+Returns a block by number. Set `fullTx` to `true` to include full transaction objects instead of just hashes.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockNumber` | `string` | Block number (hex) or tag: `"latest"`, `"pending"`, `"earliest"`, `"finalized"`, `"safe"` |
+| `fullTx` | `boolean` | If `true`, return full transaction objects |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getBlockByNumber","params":["latest", false],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "number": "0x1a4",
+    "hash": "0xabc...123",
+    "parentHash": "0xdef...456",
+    "timestamp": "0x65f5e100",
+    "gasUsed": "0x5208",
+    "gasLimit": "0x1c9c380",
+    "miner": "0x0000000000000000000000000000000000000000",
+    "transactions": ["0x789...abc"]
+  }
+}
+```
+
+---
+
+## qc_getBlockByHash
+
+Returns a block by its hash. Same parameters as `qc_getBlockByNumber` but accepts a block hash.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockHash` | `string` | 32-byte block hash (hex) |
+| `fullTx` | `boolean` | If `true`, return full transaction objects |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getBlockByHash","params":["0xabc...123", true],"id":1}'
+```
+
+---
+
+## qc_getHeaderByNumber
+
+Returns a block header by number.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockNumber` | `string` | Block number (hex) or tag |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getHeaderByNumber","params":["latest"],"id":1}'
+```
+
+---
+
+## qc_getHeaderByHash
+
+Returns a block header by its hash.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockHash` | `string` | 32-byte block hash (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getHeaderByHash","params":["0xabc...123"],"id":1}'
+```
+
+---
+
+## qc_getUncleCountByBlockNumber
+
+Returns the number of uncles in a block by block number.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockNumber` | `string` | Block number (hex) or tag |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getUncleCountByBlockNumber","params":["latest"],"id":1}'
+```
+
+---
+
+## qc_getUncleCountByBlockHash
+
+Returns the number of uncles in a block by block hash.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockHash` | `string` | 32-byte block hash (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getUncleCountByBlockHash","params":["0xabc...123"],"id":1}'
+```
+
+---
+
+## qc_getUncleByBlockNumberAndIndex
+
+Returns uncle block data by block number and uncle index.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockNumber` | `string` | Block number (hex) or tag |
+| `uncleIndex` | `string` | Uncle position index (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getUncleByBlockNumberAndIndex","params":["latest","0x0"],"id":1}'
+```
+
+---
+
+## qc_getUncleByBlockHashAndIndex
+
+Returns uncle block data by block hash and uncle index.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockHash` | `string` | 32-byte block hash (hex) |
+| `uncleIndex` | `string` | Uncle position index (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getUncleByBlockHashAndIndex","params":["0xabc...123","0x0"],"id":1}'
+```

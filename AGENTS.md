@@ -14,12 +14,11 @@
 
 ## Terminology
 
-- **Quantum Chain (QC)** — post-quantum Ethereum fork using Dilithium3/ML-DSA-65
-- **Dilithium3 / ML-DSA-65** — NIST post-quantum digital signature algorithm (3293-byte signatures, 1952-byte public keys)
+- **Quantum Chain (QC)** — post-quantum Ethereum fork using proprietary quantum-safe signatures
 - **Vault account** — logical grouping that holds one or more wallets (not "vault" alone)
 - **Wallet** — a single Quantum Chain address within a vault account; holds assets and signs transactions
 - **Non-custodial** — the API never holds private keys; signing happens via external callback
-- **Signing callback** — HTTP callback sent to the integrator's signer to produce a Dilithium3 signature
+- **Signing callback** — HTTP callback sent to the integrator's signer to produce a post-quantum signature
 - **Signing payload** — the unsigned transaction digest returned by `GET /transactions/{id}/signing_payload`
 - **Transaction lifecycle** — PENDING_SIGNATURE → SIGNED → BROADCASTING → CONFIRMING → COMPLETED (or FAILED/CANCELLED)
 - **Policy** — a rule (MAX_AMOUNT, WHITELIST, BLACKLIST, REQUIRE_APPROVAL, TIME_WINDOW, DAILY_LIMIT) enforced before a transaction is broadcast
@@ -37,7 +36,7 @@
 - Code formatting for file names, commands, paths, and code references
 - Always use "Quantum Chain" (two words, capitalized) — never "quantum chain" or "QuantumChain"
 - Prefer "vault account" over "vault" when referring to the container resource
-- Use "Dilithium3" for casual references, "ML-DSA-65" when citing the NIST standard
+- Use "post-quantum" or "quantum-safe" when referring to the signature scheme — never name the specific algorithm
 
 ## Content boundaries
 

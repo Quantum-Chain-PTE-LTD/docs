@@ -1,0 +1,398 @@
+---
+title: "Transactions"
+description: "Send, query, sign, and inspect transactions and the pending pool"
+---
+
+## qc_getTransactionCount
+
+Returns the number of transactions sent from an address (nonce).
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `address` | `string` | 20-byte address (hex) |
+| `blockNumber` | `string` | Block number (hex) or tag |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getTransactionCount","params":["0xff81e5c74e14db5b4ee407d66b1b063c8f305c51","latest"],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0x5"
+}
+```
+
+---
+
+## qc_sendTransaction
+
+Signs and sends a transaction from an unlocked account on the node.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `from` | `string` | Sender address |
+| `to` | `string` | Recipient address |
+| `value` | `string` | Value in wei (hex) |
+| `gas` | `string` | Gas limit (hex) |
+| `gasPrice` | `string` | Gas price in wei (hex) |
+| `data` | `string` | Contract call data (hex) |
+| `nonce` | `string` | Transaction nonce (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "qc_sendTransaction",
+    "params": [{
+      "from": "0xff81e5c74e14db5b4ee407d66b1b063c8f305c51",
+      "to": "0x1234567890abcdef1234567890abcdef12345678",
+      "value": "0xde0b6b3a7640000",
+      "gas": "0x5208"
+    }],
+    "id": 1
+  }'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0xabc123...def456"
+}
+```
+
+<Warning>
+  This method requires the sender account to be unlocked on the node. For production signing, use the Custody API or `qc_sendRawTransaction` with an externally signed payload.
+</Warning>
+
+---
+
+## qc_sendRawTransaction
+
+Submits a pre-signed raw transaction. This is the standard method for submitting transactions signed by external key management systems.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `signedTxData` | `string` | RLP-encoded signed transaction (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_sendRawTransaction","params":["0xf86c..."],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0xabc123...def456"
+}
+```
+
+---
+
+## qc_getTransactionByHash
+
+Returns transaction details by transaction hash.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `txHash` | `string` | 32-byte transaction hash (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getTransactionByHash","params":["0xabc123...def456"],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "hash": "0xabc123...def456",
+    "nonce": "0x5",
+    "blockHash": "0xdef...789",
+    "blockNumber": "0x1a4",
+    "transactionIndex": "0x0",
+    "from": "0xff81...c51",
+    "to": "0x1234...5678",
+    "value": "0xde0b6b3a7640000",
+    "gas": "0x5208",
+    "gasPrice": "0x3b9aca00",
+    "input": "0x"
+  }
+}
+```
+
+---
+
+## qc_getTransactionReceipt
+
+Returns the receipt of a mined transaction.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `txHash` | `string` | 32-byte transaction hash (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getTransactionReceipt","params":["0xabc123...def456"],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "transactionHash": "0xabc123...def456",
+    "transactionIndex": "0x0",
+    "blockHash": "0xdef...789",
+    "blockNumber": "0x1a4",
+    "from": "0xff81...c51",
+    "to": "0x1234...5678",
+    "gasUsed": "0x5208",
+    "cumulativeGasUsed": "0x5208",
+    "contractAddress": null,
+    "logs": [],
+    "status": "0x1",
+    "effectiveGasPrice": "0x3b9aca00"
+  }
+}
+```
+
+---
+
+## qc_getRawTransactionByHash
+
+Returns the RLP-encoded raw transaction by hash.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `txHash` | `string` | 32-byte transaction hash (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getRawTransactionByHash","params":["0xabc123...def456"],"id":1}'
+```
+
+---
+
+## qc_getTransactionByBlockNumberAndIndex
+
+Returns a transaction by block number and transaction index.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockNumber` | `string` | Block number (hex) or tag |
+| `txIndex` | `string` | Transaction index (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getTransactionByBlockNumberAndIndex","params":["latest","0x0"],"id":1}'
+```
+
+---
+
+## qc_getTransactionByBlockHashAndIndex
+
+Returns a transaction by block hash and transaction index.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockHash` | `string` | 32-byte block hash (hex) |
+| `txIndex` | `string` | Transaction index (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getTransactionByBlockHashAndIndex","params":["0xdef...789","0x0"],"id":1}'
+```
+
+---
+
+## qc_getRawTransactionByBlockNumberAndIndex
+
+Returns the RLP-encoded raw transaction by block number and index.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockNumber` | `string` | Block number (hex) or tag |
+| `txIndex` | `string` | Transaction index (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getRawTransactionByBlockNumberAndIndex","params":["latest","0x0"],"id":1}'
+```
+
+---
+
+## qc_getRawTransactionByBlockHashAndIndex
+
+Returns the RLP-encoded raw transaction by block hash and index.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockHash` | `string` | 32-byte block hash (hex) |
+| `txIndex` | `string` | Transaction index (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getRawTransactionByBlockHashAndIndex","params":["0xdef...789","0x0"],"id":1}'
+```
+
+---
+
+## qc_getBlockTransactionCountByNumber
+
+Returns the number of transactions in a block by block number.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockNumber` | `string` | Block number (hex) or tag |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getBlockTransactionCountByNumber","params":["latest"],"id":1}'
+```
+
+---
+
+## qc_getBlockTransactionCountByHash
+
+Returns the number of transactions in a block by block hash.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockHash` | `string` | 32-byte block hash (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_getBlockTransactionCountByHash","params":["0xdef...789"],"id":1}'
+```
+
+---
+
+## qc_sign
+
+Signs data with an unlocked account. Returns the signature.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `address` | `string` | Signer address |
+| `data` | `string` | Data to sign (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_sign","params":["0xff81e5c74e14db5b4ee407d66b1b063c8f305c51","0xdeadbeef"],"id":1}'
+```
+
+<Warning>
+  Requires the account to be unlocked on the node.
+</Warning>
+
+---
+
+## qc_signTransaction
+
+Signs a transaction without broadcasting it. Returns the RLP-encoded signed transaction.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `txObject` | `object` | Transaction object (same fields as `qc_sendTransaction`) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "qc_signTransaction",
+    "params": [{
+      "from": "0xff81e5c74e14db5b4ee407d66b1b063c8f305c51",
+      "to": "0x1234567890abcdef1234567890abcdef12345678",
+      "value": "0xde0b6b3a7640000",
+      "gas": "0x5208"
+    }],
+    "id": 1
+  }'
+```
+
+---
+
+## qc_pendingTransactions
+
+Returns all pending transactions in the node's transaction pool.
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_pendingTransactions","params":[],"id":1}'
+```
+
+---
+
+## qc_fillTransaction
+
+Fills in default values (nonce, gas, gas price) for a transaction object without signing or submitting it.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `txObject` | `object` | Partial transaction object |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "qc_fillTransaction",
+    "params": [{
+      "from": "0xff81e5c74e14db5b4ee407d66b1b063c8f305c51",
+      "to": "0x1234567890abcdef1234567890abcdef12345678",
+      "value": "0xde0b6b3a7640000"
+    }],
+    "id": 1
+  }'
+```
+
+---
+
+## qc_resend
+
+Replaces a pending transaction with new gas parameters. The original transaction is matched by `from`, `nonce`, and other fields.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `txObject` | `object` | Original transaction object to match |
+| `gasPrice` | `string` | New gas price (hex) |
+| `gasLimit` | `string` | New gas limit (hex) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "qc_resend",
+    "params": [{
+      "from": "0xff81e5c74e14db5b4ee407d66b1b063c8f305c51",
+      "to": "0x1234567890abcdef1234567890abcdef12345678",
+      "value": "0xde0b6b3a7640000",
+      "nonce": "0x5",
+      "gasPrice": "0x3b9aca00",
+      "gas": "0x5208"
+    }, "0x77359400", "0x5208"],
+    "id": 1
+  }'
+```

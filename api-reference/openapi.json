@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Quantum Chain Custody API",
-    "description": "Non-custodial custody and orchestration API for Quantum Chain (Dilithium3 post-quantum blockchain).\nProvides Fireblocks-like operating model for institutional integrators:\nmulti-tenant vault/wallet management, transaction lifecycle with policy enforcement,\nexternal (callback-based) signing, webhook-driven event delivery, and full audit trail.\n",
+    "description": "Non-custodial custody and orchestration API for Quantum Chain (post-quantum blockchain).\nProvides Fireblocks-like operating model for institutional integrators:\nmulti-tenant vault/wallet management, transaction lifecycle with policy enforcement,\nexternal (callback-based) signing, webhook-driven event delivery, and full audit trail.\n",
     "version": "1.0.0",
     "contact": {
       "name": "Quantum Chain Platform Team"
@@ -278,7 +278,7 @@
           },
           "publicKey": {
             "type": "string",
-            "description": "Hex-encoded Dilithium3 public key (1952 bytes)"
+            "description": "Hex-encoded post-quantum public key"
           },
           "label": {
             "type": "string"
@@ -314,7 +314,7 @@
           },
           "publicKey": {
             "type": "string",
-            "description": "Hex-encoded Dilithium3 public key (1952 bytes)",
+            "description": "Hex-encoded post-quantum public key",
             "minLength": 3904,
             "maxLength": 3904
           },
@@ -584,7 +584,7 @@
           },
           "signingHash": {
             "type": "string",
-            "description": "Hex-encoded 32-byte Keccak256 digest to sign with Dilithium3"
+            "description": "Hex-encoded 32-byte Keccak256 digest to sign with your post-quantum key"
           },
           "status": {
             "type": "string"
@@ -613,11 +613,11 @@
         "properties": {
           "signature": {
             "type": "string",
-            "description": "Hex-encoded Dilithium3 signature (3293 bytes)"
+            "description": "Hex-encoded post-quantum signature"
           },
           "publicKey": {
             "type": "string",
-            "description": "Hex-encoded Dilithium3 public key (1952 bytes)"
+            "description": "Hex-encoded post-quantum public key"
           }
         }
       },
@@ -1077,7 +1077,7 @@
           "wallets"
         ],
         "summary": "Register an external wallet address",
-        "description": "Non-custodial wallet registration. The caller provides the on-chain address\nand the Dilithium3 public key. The custody service never holds private keys.\n",
+        "description": "Non-custodial wallet registration. The caller provides the on-chain address\nand the post-quantum public key. The custody service never holds private keys.\n",
         "parameters": [
           {
             "name": "vaultAccountId",
@@ -1244,7 +1244,7 @@
           "transactions"
         ],
         "summary": "Create a new transfer",
-        "description": "Initiates a transfer through the custody lifecycle. The transaction\npasses through policy evaluation and, if approved, enters the\nPENDING_SIGNATURE state. The signing payload must be retrieved\nand signed externally using Dilithium3.\n",
+        "description": "Initiates a transfer through the custody lifecycle. The transaction\npasses through policy evaluation and, if approved, enters the\nPENDING_SIGNATURE state. The signing payload must be retrieved\nand signed externally using your post-quantum key.\n",
         "parameters": [
           {
             "$ref": "#/components/parameters/idempotencyKey"
@@ -1392,7 +1392,7 @@
           "transactions"
         ],
         "summary": "Retrieve the signing payload for external signing",
-        "description": "Returns the Keccak256 hash that must be signed with Dilithium3.\nOnly available when the transaction is in PENDING_SIGNATURE state.\n",
+        "description": "Returns the Keccak256 hash that must be signed with your post-quantum key.\nOnly available when the transaction is in PENDING_SIGNATURE state.\n",
         "parameters": [
           {
             "name": "id",
@@ -1434,7 +1434,7 @@
         "tags": [
           "transactions"
         ],
-        "summary": "Submit a Dilithium3 signature for the transaction",
+        "summary": "Submit a post-quantum signature for the transaction",
         "description": "After signing the payload externally, submit the signature and\npublic key. The service validates the signature, assembles the\nsigned transaction, and broadcasts it to the Quantum Chain network.\n",
         "parameters": [
           {

@@ -1,0 +1,121 @@
+---
+title: "Gas & fees"
+description: "Query gas price, priority fees, fee history, and estimate gas costs"
+---
+
+## qc_gasPrice
+
+Returns the current gas price in wei.
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_gasPrice","params":[],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0x3b9aca00"
+}
+```
+
+---
+
+## qc_maxPriorityFeePerGas
+
+Returns the suggested priority fee (tip) per gas for EIP-1559 transactions.
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"qc_maxPriorityFeePerGas","params":[],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0x3b9aca00"
+}
+```
+
+---
+
+## qc_feeHistory
+
+Returns historical gas fee data. Useful for estimating future fees.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `blockCount` | `string` | Number of blocks to look back (hex, max 1024) |
+| `newestBlock` | `string` | Block number (hex) or tag |
+| `rewardPercentiles` | `number[]` | Percentiles to sample effective priority fees at (e.g. `[25, 50, 75]`) |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "qc_feeHistory",
+    "params": ["0x4", "latest", [25, 50, 75]],
+    "id": 1
+  }'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "oldestBlock": "0x1a1",
+    "baseFeePerGas": ["0x3b9aca00", "0x3b9aca00", "0x3b9aca00", "0x3b9aca00", "0x3b9aca00"],
+    "gasUsedRatio": [0.021, 0.0, 0.0, 0.015],
+    "reward": [
+      ["0x3b9aca00", "0x3b9aca00", "0x3b9aca00"],
+      ["0x0", "0x0", "0x0"],
+      ["0x0", "0x0", "0x0"],
+      ["0x3b9aca00", "0x3b9aca00", "0x3b9aca00"]
+    ]
+  }
+}
+```
+
+---
+
+## qc_estimateGas
+
+Estimates the gas needed to execute a transaction. The transaction is not sent.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `txObject` | `object` | Transaction call object |
+| `blockNumber` | `string` | *(optional)* Block number (hex) or tag |
+
+```bash
+curl -X POST http://localhost:8545 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "qc_estimateGas",
+    "params": [{
+      "from": "0xff81e5c74e14db5b4ee407d66b1b063c8f305c51",
+      "to": "0x1234567890abcdef1234567890abcdef12345678",
+      "value": "0xde0b6b3a7640000"
+    }],
+    "id": 1
+  }'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0x5208"
+}
+```
+
+<Tip>
+  `0x5208` = 21000 gas — the base cost of a simple QC transfer.
+</Tip>

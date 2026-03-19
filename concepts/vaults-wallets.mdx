@@ -34,12 +34,12 @@ curl "$BASE_URL/vault/accounts" \
 A wallet represents a single Quantum Chain address within a vault account. Each wallet has:
 
 - **Address** — the Quantum Chain hex address
-- **Public key** — the Dilithium3 public key associated with the address
+- **Public key** — the post-quantum public key associated with the address
 - **Name** — an optional human-readable label
 
 ### Non-custodial registration
 
-Since the Custody API is non-custodial, you **register** existing wallets rather than having the API generate keys. You provide the address and Dilithium3 public key from your external key management system.
+Since the Custody API is non-custodial, you **register** existing wallets rather than having the API generate keys. You provide the address and post-quantum public key from your external key management system.
 
 ```bash
 curl -X POST "$BASE_URL/vault/accounts/{vaultAccountId}/wallets" \
@@ -47,7 +47,7 @@ curl -X POST "$BASE_URL/vault/accounts/{vaultAccountId}/wallets" \
   -H "Content-Type: application/json" \
   -d '{
     "address": "0x1234...abcd",
-    "public_key": "<base64-dilithium3-public-key>",
+    "public_key": "<base64-public-key>",
     "name": "Hot Wallet"
   }'
 ```

@@ -135,6 +135,27 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "RPC Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "rpc-reference/index"
+            ]
+          },
+          {
+            "group": "Methods",
+            "pages": [
+              "rpc-reference/blocks",
+              "rpc-reference/accounts",
+              "rpc-reference/transactions",
+              "rpc-reference/gas-fees",
+              "rpc-reference/execution"
+            ]
+          }
+        ]
       }
     ],
     "global": {
