@@ -43,10 +43,26 @@ Save the `secret` — it is shown only once. You need it to verify webhook signa
 | `transaction.approval_required` | Policy requires manual approval |
 | `deposit.detected` | Inbound transfer detected on a registered wallet |
 | `deposit.confirmed` | Inbound transfer confirmed with sufficient depth |
+| `approval.decision` | An approval or rejection decision was made |
 
 Use `*` wildcards in event subscriptions — `transaction.*` subscribes to all transaction events.
 
+<Tip>
+  Pass an empty `events` array (or omit it) to subscribe to **all** event types.
+</Tip>
+
 ## Webhook payload format
+
+Every delivery includes these headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-Webhook-ID` | Unique delivery ID |
+| `X-Webhook-Timestamp` | Unix timestamp of the delivery attempt |
+| `X-Webhook-Signature` | HMAC-SHA256 signature for verification |
+| `Content-Type` | `application/json` |
+
+The JSON body follows this structure:
 
 ```json
 {
@@ -63,40 +79,76 @@ Use `*` wildcards in event subscriptions — `transaction.*` subscribes to all t
 
 ## HMAC-SHA256 verification
 
-Every delivery includes a signature header:
+Always verify the `X-Webhook-Signature` header to confirm the payload came from QC Custody and hasn't been tampered with.
+
+The signature is computed as:
 
 ```
-X-Webhook-Signature: sha256=<hex-encoded-hmac>
+HMAC-SHA256(webhook_secret, timestamp + "." + raw_body)
 ```
 
-Verify the signature in your handler:
-
-```python
+<CodeGroup>
+```python Python
 import hmac
 import hashlib
 
-def verify_webhook(payload_body, signature_header, secret):
+def verify_webhook(secret: str, timestamp: str, body: bytes, signature: str) -> bool:
+    message = f"{timestamp}.".encode() + body
     expected = hmac.new(
         secret.encode(),
-        payload_body,
+        message,
         hashlib.sha256
     ).hexdigest()
-    received = signature_header.replace("sha256=", "")
-    return hmac.compare_digest(expected, received)
+    return hmac.compare_digest(expected, signature)
+
+# In your webhook handler:
+# timestamp = request.headers["X-Webhook-Timestamp"]
+# signature = request.headers["X-Webhook-Signature"]
+# body = request.body (raw bytes)
+# verify_webhook(webhook_secret, timestamp, body, signature)
 ```
 
-```go
-func verifyWebhook(body []byte, signatureHeader, secret string) bool {
+```javascript JavaScript
+const crypto = require("crypto");
+
+function verifyWebhook(secret, timestamp, body, signature) {
+  const message = `${timestamp}.${body}`;
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(message)
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signature)
+  );
+}
+
+// In your Express handler:
+// const timestamp = req.headers["x-webhook-timestamp"];
+// const signature = req.headers["x-webhook-signature"];
+// verifyWebhook(webhookSecret, timestamp, req.rawBody, signature);
+```
+
+```go Go
+import (
+    "crypto/hmac"
+    "crypto/sha256"
+    "encoding/hex"
+    "fmt"
+)
+
+func verifyWebhook(secret, timestamp string, body []byte, signature string) bool {
+    message := fmt.Sprintf("%s.%s", timestamp, string(body))
     mac := hmac.New(sha256.New, []byte(secret))
-    mac.Write(body)
+    mac.Write([]byte(message))
     expected := hex.EncodeToString(mac.Sum(nil))
-    received := strings.TrimPrefix(signatureHeader, "sha256=")
-    return hmac.Equal([]byte(expected), []byte(received))
+    return hmac.Equal([]byte(expected), []byte(signature))
 }
 ```
+</CodeGroup>
 
 <Warning>
-Always verify the HMAC signature before processing a webhook. Reject unverified deliveries to prevent spoofing.
+Always use constant-time comparison (`hmac.compare_digest` in Python, `crypto.timingSafeEqual` in Node.js, `hmac.Equal` in Go) to prevent timing attacks.
 </Warning>
 
 ## Retry behavior

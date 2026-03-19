@@ -1,18 +1,27 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Quantum Chain Custody API",
+  "name": "Quantum Chain Custody",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#7C3AED",
+    "light": "#A78BFA",
+    "dark": "#5B21B6"
   },
   "favicon": "/favicon.svg",
   "openapi": ["/api-reference/openapi.json"],
+  "appearance": {
+    "default": "dark"
+  },
+  "background": {
+    "color": {
+      "light": "#FFFFFF",
+      "dark": "#0F172A"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
             "group": "Getting started",
@@ -29,7 +38,9 @@
               "concepts/vaults-wallets",
               "concepts/transactions",
               "concepts/policies",
-              "concepts/webhooks"
+              "concepts/webhooks",
+              "concepts/quantum-safety",
+              "concepts/state-machine"
             ]
           },
           {
@@ -41,7 +52,7 @@
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
             "group": "Overview",
@@ -112,10 +123,27 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/external-signing",
+              "guides/transaction-lifecycle"
+            ]
+          }
+        ]
       }
     ],
     "global": {
       "anchors": [
+        {
+          "anchor": "Community",
+          "href": "https://discord.gg/quantumchain",
+          "icon": "discord"
+        },
         {
           "anchor": "GitHub",
           "href": "https://github.com/Quantum-Chain-PTE-LTD",
@@ -153,9 +181,16 @@
      "vscode"
    ]
   },
+  "seo": {
+    "metatags": {
+      "canonical": "https://docs.quantumapi.io"
+    }
+  },
   "footer": {
     "socials": {
-      "github": "https://github.com/Quantum-Chain-PTE-LTD"
+      "github": "https://github.com/Quantum-Chain-PTE-LTD",
+      "x": "https://x.com/quantumchain",
+      "discord": "https://discord.gg/quantumchain"
     }
   }
 }

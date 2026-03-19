@@ -1,0 +1,142 @@
+---
+title: Transaction state machine
+description: Formal definition of the 12 transaction states, valid transitions, and trigger conditions.
+---
+
+## State diagram
+
+```mermaid
+stateDiagram-v2
+    direction TB
+
+    [*] --> CREATED: POST /transactions
+
+    CREATED --> SIGNING_REQUESTED: Policy allows (auto-approve)
+    CREATED --> PENDING_APPROVAL: Policy requires approval
+    CREATED --> REJECTED: Policy denies
+
+    PENDING_APPROVAL --> APPROVED: POST /approve
+    PENDING_APPROVAL --> REJECTED: POST /reject
+    PENDING_APPROVAL --> CANCELLED: Timeout or cancel
+
+    APPROVED --> SIGNING_REQUESTED: Proceed to signing
+
+    SIGNING_REQUESTED --> SIGNED: POST /sign (valid)
+    SIGNING_REQUESTED --> SIGN_FAILED: POST /sign (invalid)
+    SIGNING_REQUESTED --> CANCELLED: Timeout or cancel
+
+    SIGNED --> BROADCASTING: Assembling raw tx
+
+    BROADCASTING --> CONFIRMING: Broadcast accepted
+    BROADCASTING --> FAILED: Node rejected
+
+    CONFIRMING --> COMPLETED: Confirmation depth reached
+    CONFIRMING --> FAILED: Revert / dropped
+
+    COMPLETED --> [*]
+    FAILED --> [*]
+    REJECTED --> [*]
+    CANCELLED --> [*]
+    SIGN_FAILED --> [*]
+```
+
+## Transition table
+
+| From | To | Trigger | Actor |
+|------|-----|---------|-------|
+| — | `CREATED` | `POST /v1/transactions` | API caller |
+| `CREATED` | `SIGNING_REQUESTED` | Policy engine approves automatically | System |
+| `CREATED` | `PENDING_APPROVAL` | Policy engine requires approval | System |
+| `CREATED` | `REJECTED` | Policy engine denies | System |
+| `PENDING_APPROVAL` | `APPROVED` | `POST /v1/transactions/{id}/approve` | Approver |
+| `PENDING_APPROVAL` | `REJECTED` | `POST /v1/transactions/{id}/reject` | Approver |
+| `PENDING_APPROVAL` | `CANCELLED` | Approval timeout or manual cancel | System / API caller |
+| `APPROVED` | `SIGNING_REQUESTED` | Automatic after approval | System |
+| `SIGNING_REQUESTED` | `SIGNED` | `POST /v1/transactions/{id}/sign` with valid signature | External signer |
+| `SIGNING_REQUESTED` | `SIGN_FAILED` | `POST /v1/transactions/{id}/sign` with invalid signature | External signer |
+| `SIGNING_REQUESTED` | `CANCELLED` | Signing timeout or manual cancel | System / API caller |
+| `SIGNED` | `BROADCASTING` | Transaction assembly complete | System |
+| `BROADCASTING` | `CONFIRMING` | Node accepted the transaction | System |
+| `BROADCASTING` | `FAILED` | Node rejected (bad nonce, insufficient gas, etc.) | System |
+| `CONFIRMING` | `COMPLETED` | Required confirmation depth reached | System |
+| `CONFIRMING` | `FAILED` | Transaction reverted or dropped from mempool | System |
+
+## State categories
+
+### Active states (in-progress)
+
+These states indicate the transaction is still being processed:
+
+<CardGroup cols={3}>
+  <Card title="CREATED">Just created, policy evaluation imminent</Card>
+  <Card title="PENDING_APPROVAL">Waiting for human decision</Card>
+  <Card title="APPROVED">Approved, transitioning to signing</Card>
+  <Card title="SIGNING_REQUESTED">Awaiting external signature</Card>
+  <Card title="SIGNED">Signature validated, assembling tx</Card>
+  <Card title="BROADCASTING">Sending to the network</Card>
+  <Card title="CONFIRMING">On-chain, counting confirmations</Card>
+</CardGroup>
+
+### Terminal states (final)
+
+These states are irreversible — the transaction will not change again:
+
+<CardGroup cols={3}>
+  <Card title="COMPLETED">Successfully confirmed on-chain</Card>
+  <Card title="FAILED">Failed during broadcast or confirmation</Card>
+  <Card title="REJECTED">Denied by policy or approver</Card>
+  <Card title="CANCELLED">Cancelled before reaching chain</Card>
+  <Card title="SIGN_FAILED">Invalid signature submitted</Card>
+</CardGroup>
+
+## Webhook events per state
+
+| State entered | Webhook event |
+|---------------|---------------|
+| `CREATED` | `transaction.created` |
+| `PENDING_APPROVAL` | `approval.required` |
+| `APPROVED` | `approval.decision` |
+| `REJECTED` | `approval.decision` or `transaction.status_changed` |
+| `SIGNING_REQUESTED` | `transaction.status_changed` |
+| `SIGNED` | `transaction.status_changed` |
+| `BROADCASTING` | `transaction.status_changed` |
+| `CONFIRMING` | `transaction.status_changed` |
+| `COMPLETED` | `transaction.completed` |
+| `FAILED` | `transaction.failed` |
+| `CANCELLED` | `transaction.status_changed` |
+| `SIGN_FAILED` | `transaction.status_changed` |
+
+## Integration pattern
+
+```mermaid
+sequenceDiagram
+    participant You
+    participant API as Custody API
+    participant WH as Webhook
+
+    You->>API: POST /transactions
+    API-->>You: {status: CREATED}
+    API-->>WH: transaction.created
+
+    Note over API: Policy evaluation
+    API-->>WH: transaction.status_changed → SIGNING_REQUESTED
+
+    You->>API: GET /transactions/{id}/signing-payload
+    API-->>You: {signingHash: "0x..."}
+
+    Note over You: Sign with quantum-safe key
+
+    You->>API: POST /transactions/{id}/sign
+    API-->>You: {status: CONFIRMING}
+    API-->>WH: transaction.status_changed → CONFIRMING
+
+    Note over API: Waiting for confirmations...
+
+    API-->>WH: transaction.completed
+```
+
+<Tip>
+  Use the `transaction.status_changed` webhook to track all intermediate states,
+  and the specific `transaction.completed` / `transaction.failed` events for
+  final state handling.
+</Tip>

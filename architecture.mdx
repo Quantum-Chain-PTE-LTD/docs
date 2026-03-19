@@ -13,40 +13,65 @@ Unlike traditional custodial solutions, the Custody API delegates all signing to
 - **The API orchestrates** — it creates transactions, enforces policies, and broadcasts signed transactions to the Quantum Chain network
 - **Signing is a callback** — when a transaction needs signing, you retrieve the payload, sign it externally, and submit the signature back
 
-```
-┌─────────────┐      ┌──────────────┐      ┌──────────────┐
-│  Your App   │─────▶│  Custody API │─────▶│ Quantum Chain│
-│             │      │              │      │   Network    │
-│             │◀─────│              │◀─────│              │
-└─────────────┘      └──────────────┘      └──────────────┘
-       │                     │
-       │   signing_payload   │
-       │◀────────────────────│
-       │                     │
-       │   submit signature  │
-       │────────────────────▶│
+```mermaid
+graph LR
+    A[Your App] -->|Create tx| B[Custody API]
+    B -->|Broadcast| C[Quantum Chain Network]
+    C -->|Confirmations| B
+    B -->|Status updates| A
+    B -->|signing_payload| A
+    A -->|submit signature| B
 ```
 
 ## Transaction lifecycle
 
 Every transaction moves through a deterministic state machine:
 
-```
-PENDING_SIGNATURE ──▶ SIGNED ──▶ BROADCASTING ──▶ CONFIRMING ──▶ COMPLETED
-       │                                                │
-       ▼                                                ▼
-   CANCELLED                                         FAILED
+```mermaid
+stateDiagram-v2
+    [*] --> CREATED: POST /transactions
+    CREATED --> SIGNING_REQUESTED: Auto-approved
+    CREATED --> PENDING_APPROVAL: Policy requires approval
+    CREATED --> REJECTED: Policy denied
+
+    PENDING_APPROVAL --> APPROVED: POST /approve
+    PENDING_APPROVAL --> REJECTED: POST /reject
+    PENDING_APPROVAL --> CANCELLED: Timeout
+
+    APPROVED --> SIGNING_REQUESTED: Ready for signing
+
+    SIGNING_REQUESTED --> SIGNED: Signature submitted
+    SIGNING_REQUESTED --> SIGN_FAILED: Invalid signature
+    SIGNING_REQUESTED --> CANCELLED: Timeout
+
+    SIGNED --> BROADCASTING: Assembling tx
+    BROADCASTING --> CONFIRMING: Broadcast success
+    BROADCASTING --> FAILED: Broadcast rejected
+
+    CONFIRMING --> COMPLETED: Confirmed
+    CONFIRMING --> FAILED: Reverted/dropped
+
+    COMPLETED --> [*]
+    FAILED --> [*]
+    REJECTED --> [*]
+    CANCELLED --> [*]
+    SIGN_FAILED --> [*]
 ```
 
 | State | Description |
 |-------|-------------|
-| `PENDING_SIGNATURE` | Created, awaiting external signature |
+| `CREATED` | Just created, policy evaluation imminent |
+| `PENDING_APPROVAL` | Awaiting manual approval per policy |
+| `APPROVED` | Approved, transitioning to signing |
+| `SIGNING_REQUESTED` | Ready for external Dilithium3 signature |
 | `SIGNED` | Signature received and verified |
 | `BROADCASTING` | Submitted to Quantum Chain nodes |
 | `CONFIRMING` | Included in a block, waiting for confirmation depth |
 | `COMPLETED` | Confirmed with sufficient block depth |
 | `FAILED` | Transaction reverted or could not be broadcast |
+| `REJECTED` | Denied by policy or approver |
 | `CANCELLED` | Cancelled before signing or broadcasting |
+| `SIGN_FAILED` | Invalid signature submitted |
 
 ## Request flow
 

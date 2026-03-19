@@ -18,16 +18,26 @@ All examples use `http://localhost:8080` as the base URL. Replace with your depl
 
 Every request requires a Bearer token in the format `key_id:secret`.
 
-```bash
+<CodeGroup>
+```bash cURL
 export CUSTODY_API_KEY="your_key_id:your_secret"
 export BASE_URL="http://localhost:8080/v1"
-```
 
-Test your credentials:
-
-```bash
+# Test credentials
 curl -s "$BASE_URL/healthz" | jq .
 ```
+
+```python Python SDK
+from quantumchain_custody import Client
+
+client = Client(
+    api_key="your_key_id:your_secret",
+    base_url="http://localhost:8080"
+)
+health = client.health.check()
+print(health)
+```
+</CodeGroup>
 
 ```json
 {
@@ -39,12 +49,19 @@ curl -s "$BASE_URL/healthz" | jq .
 
 A tenant is an isolated organizational unit. All vaults, wallets, and transactions belong to a tenant.
 
-```bash
+<CodeGroup>
+```bash cURL
 curl -s -X POST "$BASE_URL/tenants" \
   -H "Authorization: Bearer $CUSTODY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"name": "My Organization"}' | jq .
 ```
+
+```python Python SDK
+tenant = client.tenants.create(name="My Organization")
+print(f"Tenant ID: {tenant.id}")
+```
+</CodeGroup>
 
 ```json
 {
@@ -108,12 +125,14 @@ curl -s -X POST "$BASE_URL/vault/accounts/va_def456/wallets" \
 
 ## Step 5: Create a transaction
 
-Submit a transfer. The transaction enters `PENDING_SIGNATURE` status and waits for your external signer.
+Submit a transfer. The transaction enters `SIGNING_REQUESTED` status and waits for your external signer.
 
-```bash
+<CodeGroup>
+```bash cURL
 curl -s -X POST "$BASE_URL/transactions" \
   -H "Authorization: Bearer $CUSTODY_API_KEY" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: first-transfer-001" \
   -d '{
     "asset_id": "QC_NATIVE",
     "source": {
@@ -131,10 +150,23 @@ curl -s -X POST "$BASE_URL/transactions" \
   }' | jq .
 ```
 
+```python Python SDK
+tx = client.transactions.create(
+    source_wallet_id="wlt_ghi789",
+    destination_addr="0x5678...efgh",
+    asset_id="QC_NATIVE",
+    amount="1.5",
+    note="First transfer",
+    idempotency_key="first-transfer-001"
+)
+print(f"Transaction ID: {tx.id}, Status: {tx.status}")
+```
+</CodeGroup>
+
 ```json
 {
   "id": "tx_jkl012",
-  "status": "PENDING_SIGNATURE",
+  "status": "SIGNING_REQUESTED",
   "asset_id": "QC_NATIVE",
   "amount": "1.5",
   "created_at": "2026-03-19T10:03:00Z"
@@ -145,12 +177,13 @@ curl -s -X POST "$BASE_URL/transactions" \
 
 Retrieve the signing payload and submit the Dilithium3 signature from your external signer.
 
-```bash
+<CodeGroup>
+```bash cURL
 # Get the unsigned digest
 curl -s "$BASE_URL/transactions/tx_jkl012/signing_payload" \
   -H "Authorization: Bearer $CUSTODY_API_KEY" | jq .
 
-# Submit the signature
+# Sign the hash in your HSM/key vault, then submit:
 curl -s -X POST "$BASE_URL/transactions/tx_jkl012/signature" \
   -H "Authorization: Bearer $CUSTODY_API_KEY" \
   -H "Content-Type: application/json" \
@@ -160,16 +193,39 @@ curl -s -X POST "$BASE_URL/transactions/tx_jkl012/signature" \
   }' | jq .
 ```
 
+```python Python SDK
+# Get the signing payload
+payload = client.transactions.get_signing_payload("tx_jkl012")
+print(f"Signing hash: {payload.signing_hash}")
+
+# Sign in your HSM/key vault, then submit:
+# signature_hex, public_key_hex = your_signer(payload.signing_hash)
+result = client.transactions.submit_signature(
+    "tx_jkl012",
+    signature=signature_hex,
+    public_key=public_key_hex
+)
+print(f"Status: {result.status}")
+```
+</CodeGroup>
+
 The transaction moves through `SIGNED` → `BROADCASTING` → `CONFIRMING` → `COMPLETED`.
 
 ## Step 7: Verify completion
 
 Poll the transaction or set up a [webhook](/concepts/webhooks) to receive status updates.
 
-```bash
+<CodeGroup>
+```bash cURL
 curl -s "$BASE_URL/transactions/tx_jkl012" \
   -H "Authorization: Bearer $CUSTODY_API_KEY" | jq .status
 ```
+
+```python Python SDK
+tx = client.transactions.get("tx_jkl012")
+print(f"Status: {tx.status}")
+```
+</CodeGroup>
 
 ```json
 "COMPLETED"

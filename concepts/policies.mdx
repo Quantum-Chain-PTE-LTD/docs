@@ -44,17 +44,21 @@ curl -X POST "$BASE_URL/policies" \
 
 ## Policy evaluation flow
 
-```
-Transaction Created
-       │
-       ▼
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  MAX_AMOUNT  │────▶│  WHITELIST   │────▶│ DAILY_LIMIT  │──▶ ...
-│  Pass/Fail   │     │  Pass/Fail   │     │  Pass/Fail   │
-└──────────────┘     └──────────────┘     └──────────────┘
-       │                    │                    │
-       ▼                    ▼                    ▼
-    BLOCKED              BLOCKED              BLOCKED
+```mermaid
+flowchart TD
+    A[Transaction Created] --> B{MAX_AMOUNT}
+    B -->|Pass| C{BLACKLIST}
+    B -->|Fail| X1[BLOCKED - 1201]
+    C -->|Pass| D{WHITELIST}
+    C -->|Fail| X2[BLOCKED - 1203]
+    D -->|Pass| E{DAILY_LIMIT}
+    D -->|Fail| X3[BLOCKED - 1202]
+    E -->|Pass| F{TIME_WINDOW}
+    E -->|Fail| X4[BLOCKED - 1204]
+    F -->|Pass| G{REQUIRE_APPROVAL}
+    F -->|Fail| X5[BLOCKED - 1205]
+    G -->|No| H[SIGNING_REQUESTED]
+    G -->|Yes| I[PENDING_APPROVAL]
 ```
 
 All rules are evaluated. If any rule fails:

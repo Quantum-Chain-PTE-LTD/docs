@@ -83,13 +83,13 @@ curl "$BASE_URL/assets" \
 
 ## Hierarchy diagram
 
-```
-Tenant
-└── Vault Account (e.g., "Treasury")
-    ├── Wallet A (0x1234...abcd)
-    │   └── QC_NATIVE: 150.0 QC
-    └── Wallet B (0x5678...efgh)
-        └── QC_NATIVE: 50.0 QC
+```mermaid
+graph TD
+    T[Tenant] --> V["Vault Account (Treasury)"]
+    V --> WA["Wallet A (0x1234...abcd)"]
+    V --> WB["Wallet B (0x5678...efgh)"]
+    WA --> BA["QC_NATIVE: 150.0 QC"]
+    WB --> BB["QC_NATIVE: 50.0 QC"]
 ```
 
 <Info>

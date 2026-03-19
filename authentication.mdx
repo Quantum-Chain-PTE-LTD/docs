@@ -13,12 +13,54 @@ Credentials consist of a **key ID** and a **secret**, separated by a colon:
 Authorization: Bearer <key_id>:<secret>
 ```
 
-Include this header in every API request:
+The `key_id` is the public identifier for your credential. The `secret` is the private value — it is securely hashed server-side and **never stored in plaintext**.
 
-```bash
-curl -X GET "https://api.quantumchain.io/v1/tenants" \
-  -H "Authorization: Bearer kid_abc123:sk_secret456"
+<CodeGroup>
+```python Python SDK
+from quantumchain_custody import Client
+
+client = Client(api_key="ck_live_abc123:sk_live_xyz789")
+vaults = client.vaults.list()
 ```
+
+```bash cURL
+curl -X GET https://api.quantumchain.io/v1/vaults \
+  -H "Authorization: Bearer ck_live_abc123:sk_live_xyz789"
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.quantumchain.io/v1/vaults", {
+  headers: {
+    Authorization: "Bearer ck_live_abc123:sk_live_xyz789",
+  },
+});
+```
+</CodeGroup>
+
+## How it works
+
+<Steps>
+  <Step title="Client sends Bearer token">
+    The middleware extracts the `key_id` and `secret` from the Authorization
+    header.
+  </Step>
+  <Step title="Lookup credential">
+    The `key_id` is looked up in the database. Only `ACTIVE` credentials are
+    accepted.
+  </Step>
+  <Step title="Verify secret">
+    The provided secret is compared against the stored **hash** using
+    constant-time comparison.
+  </Step>
+  <Step title="Tenant resolution">
+    The credential resolves to a tenant ID, which is injected into the request
+    context. All subsequent operations are scoped to this tenant.
+  </Step>
+  <Step title="IP allowlist check">
+    If the tenant has an IP allowlist configured, the request's source IP must
+    match one of the allowed CIDRs.
+  </Step>
+</Steps>
 
 ## Credential lifecycle
 
@@ -42,41 +84,78 @@ When IP allowlisting is enabled:
 - The allowlist is configured per tenant
 - CIDR notation is supported for IP ranges
 
+```bash
+curl -X POST https://api.quantumchain.io/v1/tenants \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -d '{
+    "name": "Secure Corp",
+    "ipAllowList": [
+      "203.0.113.0/24",
+      "198.51.100.42/32"
+    ]
+  }'
+```
+
+<Warning>
+  When an IP allowlist is configured, requests from unlisted IPs receive a `403
+  Forbidden` response. If the list is empty or null, all IPs are allowed.
+</Warning>
+
+## Idempotency
+
+All `POST` and `PUT` requests should include an `Idempotency-Key` header:
+
+```
+Idempotency-Key: unique-request-identifier
+```
+
+- Keys are scoped per tenant, method, and path
+- Keys are valid for **24 hours**
+- Replaying a request with the same key returns the original response
+- Using the same key with a different method or path returns a `422 IDEMPOTENCY_CONFLICT` error
+
+<Tip>
+  Use UUIDs or your own internal request IDs as idempotency keys. This makes
+  retries safe across network failures.
+</Tip>
+
 ## Error codes
 
-Authentication failures return specific error codes in the `1000` range:
+Authentication failures return specific error codes:
 
-| Code | Meaning |
-|------|---------|
-| `1000` | Missing or malformed `Authorization` header |
-| `1001` | Invalid API key — key ID not found |
-| `1002` | Invalid API secret — secret does not match |
-| `1003` | IP address not in allowlist |
+| Status | Code | Meaning |
+|--------|------|---------|
+| `401` | `UNAUTHORIZED` | Missing or invalid Bearer token |
+| `403` | `FORBIDDEN` | Valid token, but IP not in allowlist or insufficient permissions |
+| `422` | `IDEMPOTENCY_CONFLICT` | Idempotency key reused with different method/path |
 
-All authentication errors return HTTP `401 Unauthorized` or `403 Forbidden`:
-
-```json
+```json 401 Response
 {
-  "error": {
-    "code": 1001,
-    "message": "Invalid API key"
-  }
+  "code": "UNAUTHORIZED",
+  "message": "authentication required",
+  "requestId": "req_abc123"
 }
 ```
 
-## Best practices
+## Security best practices
 
-<CardGroup cols={2}>
-  <Card title="Rotate regularly" icon="arrows-rotate">
-    Rotate API keys every 90 days. Use the rotation endpoint to issue new credentials without downtime.
-  </Card>
-  <Card title="Use IP allowlists" icon="shield">
-    Restrict access to your known server IPs. Never call the API from client-side code.
-  </Card>
-  <Card title="Store secrets safely" icon="lock">
-    Use a secrets manager — never commit credentials to source control or environment files.
-  </Card>
-  <Card title="Separate environments" icon="layer-group">
-    Use different API keys for development, staging, and production.
-  </Card>
-</CardGroup>
+<AccordionGroup>
+  <Accordion title="Rotate credentials regularly">
+    Create a new credential, update your integrations, then revoke the old one.
+    The API supports multiple active credentials per tenant. Rotate every 90 days.
+  </Accordion>
+  <Accordion title="Use IP allowlists in production">
+    Restrict access to your known egress IPs. This provides defense-in-depth
+    even if a credential is compromised. Never call the API from client-side code.
+  </Accordion>
+  <Accordion title="Never log secrets">
+    The `secret` portion of your API key should be treated like a password.
+    Never log it, commit it to version control, or expose it in client-side
+    code.
+  </Accordion>
+  <Accordion title="Use separate credentials per environment">
+    Maintain distinct credentials for development, staging, and production to
+    limit blast radius.
+  </Accordion>
+</AccordionGroup>

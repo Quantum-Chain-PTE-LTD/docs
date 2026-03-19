@@ -1,0 +1,99 @@
+---
+title: Quantum safety
+description: Why Quantum Chain uses post-quantum cryptography and what it means for your integration.
+---
+
+## Why post-quantum?
+
+Traditional blockchains use signature schemes that are secure today but vulnerable to future quantum computers. A sufficiently powerful quantum computer could recover private keys from public keys — breaking the fundamental security assumption of digital asset custody.
+
+Quantum Chain is built from the ground up with **quantum-safe cryptography**, using a NIST-standardized post-quantum signature scheme. This means:
+
+- **No migration needed** — your keys and transactions are quantum-resistant from day one
+- **Future-proof** — security guarantees hold even as quantum computing advances
+- **Standards-based** — built on algorithms vetted by the global cryptographic community through NIST's Post-Quantum Cryptography standardization process
+
+## What this means for integrators
+
+<CardGroup cols={2}>
+  <Card title="Signing works the same way" icon="pen-nib">
+    The signing flow is identical to traditional blockchains: you receive a
+    hash, sign it with your private key, and submit the signature. The
+    quantum-safe layer is transparent to your integration.
+  </Card>
+  <Card title="Addresses are compatible" icon="link">
+    Quantum Chain addresses use the same `0x`-prefixed, 20-byte format as
+    Ethereum. Your existing address handling code works without modification.
+  </Card>
+  <Card title="Larger signatures" icon="expand">
+    Dilithium3 signatures are 3,293 bytes (vs 64 bytes for ECDSA). This is
+    the primary trade-off for quantum resistance. Quantum Chain's network
+    parameters are tuned to handle this natively.
+  </Card>
+  <Card title="Key management" icon="key">
+    Your private keys must be generated using Quantum Chain's quantum-safe
+    scheme. Key generation tooling and SDKs are provided during onboarding.
+  </Card>
+</CardGroup>
+
+## The quantum threat
+
+Quantum computers exploit **Shor's algorithm** to solve the mathematical problems that underpin traditional public-key cryptography (ECDSA, RSA, etc.) in polynomial time. While large-scale quantum computers don't exist yet, the threat is real:
+
+- **Harvest now, decrypt later** — adversaries can record encrypted data and signed transactions today, then break them when quantum computers arrive
+- **Long-lived assets** — digital assets and keys that must remain secure for years or decades are especially at risk
+- **Regulatory pressure** — NIST, NSA, and other bodies are mandating migration timelines for post-quantum readiness
+
+## NIST standardization
+
+Quantum Chain's signature scheme was selected through NIST's multi-year Post-Quantum Cryptography standardization project:
+
+| Phase | Year | Milestone |
+|-------|------|-----------|
+| Round 1 | 2017 | 69 candidate algorithms submitted |
+| Round 2 | 2019 | Narrowed to 26 candidates |
+| Round 3 | 2020 | 7 finalists and 8 alternates |
+| Standardization | 2024 | Final standards published as FIPS documents |
+
+The selected scheme — **Dilithium3 / ML-DSA-65** — is based on **lattice cryptography**, a mathematical foundation with no known efficient quantum attacks.
+
+## Security model
+
+<AccordionGroup>
+  <Accordion title="What is protected">
+    All transaction signatures and wallet key pairs use quantum-safe
+    cryptography. An attacker with a quantum computer cannot forge signatures or
+    derive private keys from public keys.
+  </Accordion>
+  <Accordion title="What is not changed">
+    Hash functions (Keccak256/SHA-3) used for address derivation and transaction
+    hashing are already quantum-resistant. They require Grover's algorithm,
+    which only provides a quadratic speedup — easily countered by using
+    sufficient hash lengths.
+  </Accordion>
+  <Accordion title="Key generation">
+    Keys must be generated using Quantum Chain's quantum-safe tooling. Standard
+    ECDSA key generation tools will not produce compatible keys. SDKs and
+    documentation for key generation are provided during onboarding.
+  </Accordion>
+</AccordionGroup>
+
+## Further reading
+
+<CardGroup cols={2}>
+  <Card
+    title="External signing guide"
+    icon="pen-nib"
+    href="/guides/external-signing"
+  >
+    How to sign transactions with your quantum-safe key — the core integration
+    flow.
+  </Card>
+  <Card
+    title="NIST PQC Project"
+    icon="landmark"
+    href="https://csrc.nist.gov/projects/post-quantum-cryptography"
+  >
+    NIST's official Post-Quantum Cryptography standardization project.
+  </Card>
+</CardGroup>
