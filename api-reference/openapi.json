@@ -301,7 +301,8 @@
         "required": [
           "assetId",
           "address",
-          "publicKey"
+          "publicKey",
+          "signature"
         ],
         "properties": {
           "assetId": {
@@ -317,6 +318,12 @@
             "description": "Hex-encoded post-quantum public key",
             "minLength": 3904,
             "maxLength": 3904
+          },
+          "signature": {
+            "type": "string",
+            "description": "Hex-encoded post-quantum signature over the ownership challenge: Keccak256('qustody:register:' + lowercase_address). Proves the caller controls the private key for the given address.",
+            "minLength": 6586,
+            "maxLength": 6586
           },
           "label": {
             "type": "string"
@@ -1077,7 +1084,7 @@
           "wallets"
         ],
         "summary": "Register an external wallet address",
-        "description": "Non-custodial wallet registration. The caller provides the on-chain address\nand the post-quantum public key. The custody service never holds private keys.\n",
+        "description": "Non-custodial wallet registration. The caller provides the on-chain address,\nthe post-quantum public key, and a signature proving ownership. The custody\nservice verifies that the public key matches the address and that the signature\nis valid over the deterministic challenge Keccak256('qustody:register:' + address).\nThe custody service never holds private keys.\n",
         "parameters": [
           {
             "name": "vaultAccountId",

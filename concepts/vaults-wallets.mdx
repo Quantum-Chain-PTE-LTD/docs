@@ -9,9 +9,9 @@ The Custody API uses a two-level hierarchy to organize blockchain addresses: **v
 
 A vault account is a logical container that groups related wallets. Common patterns:
 
-- **By purpose** — "Treasury", "Operations", "Cold Storage"
-- **By department** — "Engineering", "Finance", "Trading"
-- **By client** — one vault per end customer in a platform model
+- **By purpose:** "Treasury", "Operations", "Cold Storage"
+- **By department:** "Engineering", "Finance", "Trading"
+- **By client:** one vault per end customer in a platform model
 
 ### Create a vault account
 
@@ -33,13 +33,23 @@ curl "$BASE_URL/vault/accounts" \
 
 A wallet represents a single Quantum Chain address within a vault account. Each wallet has:
 
-- **Address** — the Quantum Chain hex address
-- **Public key** — the post-quantum public key associated with the address
-- **Name** — an optional human-readable label
+- **Address:** the Quantum Chain hex address
+- **Public key:** the post-quantum public key associated with the address
+- **Name:** an optional human-readable label
 
 ### Non-custodial registration
 
-Since the Custody API is non-custodial, you **register** existing wallets rather than having the API generate keys. You provide the address and post-quantum public key from your external key management system.
+Since the Custody API is non-custodial, you **register** existing wallets rather than having the API generate keys. You provide the address, post-quantum public key, and an **ownership proof** from your external key management system.
+
+#### Ownership proof
+
+To prevent registering wallets you do not control, every registration request must include a signature over a deterministic challenge:
+
+1. Compute the challenge: `Keccak256("qustody:register:" + lowercase_address)`
+2. Sign the 32-byte challenge with your post-quantum private key
+3. Include the hex-encoded signature in the `signature` field
+
+The API verifies that the public key derives to the given address and that the signature is valid.
 
 ```bash
 curl -X POST "$BASE_URL/vault/accounts/{vaultAccountId}/wallets" \
@@ -47,8 +57,9 @@ curl -X POST "$BASE_URL/vault/accounts/{vaultAccountId}/wallets" \
   -H "Content-Type: application/json" \
   -d '{
     "address": "0x1234...abcd",
-    "public_key": "<base64-public-key>",
-    "name": "Hot Wallet"
+    "publicKey": "<hex-encoded-public-key>",
+    "signature": "<hex-encoded-ownership-signature>",
+    "label": "Hot Wallet"
   }'
 ```
 

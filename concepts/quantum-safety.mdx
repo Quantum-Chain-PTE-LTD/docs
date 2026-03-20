@@ -5,13 +5,13 @@ description: Why Quantum Chain uses post-quantum cryptography and what it means 
 
 ## Why post-quantum?
 
-Traditional blockchains use signature schemes that are secure today but vulnerable to future quantum computers. A sufficiently powerful quantum computer could recover private keys from public keys — breaking the fundamental security assumption of digital asset custody.
+Traditional blockchains use signature schemes that are secure today but vulnerable to future quantum computers. A sufficiently powerful quantum computer could recover private keys from public keys, breaking the fundamental security assumption of digital asset custody.
 
 Quantum Chain is built from the ground up with **quantum-safe cryptography**, using a NIST-standardized post-quantum signature scheme. This means:
 
-- **No migration needed** — your keys and transactions are quantum-resistant from day one
-- **Future-proof** — security guarantees hold even as quantum computing advances
-- **Standards-based** — built on algorithms vetted by the global cryptographic community through NIST's Post-Quantum Cryptography standardization process
+- **No migration needed.** Your keys and transactions are quantum-resistant from day one
+- **Future-proof.** Security guarantees hold even as quantum computing advances
+- **Standards-based.** Built on algorithms vetted by the global cryptographic community through NIST's Post-Quantum Cryptography standardization process
 
 ## What this means for integrators
 
@@ -40,9 +40,9 @@ Quantum Chain is built from the ground up with **quantum-safe cryptography**, us
 
 Quantum computers exploit **Shor's algorithm** to solve the mathematical problems that underpin traditional public-key cryptography (ECDSA, RSA, etc.) in polynomial time. While large-scale quantum computers don't exist yet, the threat is real:
 
-- **Harvest now, decrypt later** — adversaries can record encrypted data and signed transactions today, then break them when quantum computers arrive
-- **Long-lived assets** — digital assets and keys that must remain secure for years or decades are especially at risk
-- **Regulatory pressure** — NIST, NSA, and other bodies are mandating migration timelines for post-quantum readiness
+- **Harvest now, decrypt later.** Adversaries can record encrypted data and signed transactions today, then break them when quantum computers arrive
+- **Long-lived assets.** Digital assets and keys that must remain secure for years or decades are especially at risk
+- **Regulatory pressure.** NIST, NSA, and other bodies are mandating migration timelines for post-quantum readiness
 
 ## NIST standardization
 
@@ -68,7 +68,7 @@ The selected scheme is based on **post-quantum mathematical foundations** with n
   <Accordion title="What is not changed">
     Hash functions (Keccak256/SHA-3) used for address derivation and transaction
     hashing are already quantum-resistant. They require Grover's algorithm,
-    which only provides a quadratic speedup — easily countered by using
+    which only provides a quadratic speedup, easily countered by using
     sufficient hash lengths.
   </Accordion>
   <Accordion title="Key generation">
@@ -86,7 +86,7 @@ The selected scheme is based on **post-quantum mathematical foundations** with n
     icon="pen-nib"
     href="/guides/external-signing"
   >
-    How to sign transactions with your quantum-safe key — the core integration
+    How to sign transactions with your quantum-safe key, the core integration
     flow.
   </Card>
   <Card

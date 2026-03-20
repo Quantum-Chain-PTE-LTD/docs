@@ -78,7 +78,7 @@ When a `REQUIRE_APPROVAL` policy triggers:
 
 | Code | Meaning |
 |------|---------|
-| `1200` | Policy violation — general |
+| `1200` | Policy violation (general) |
 | `1201` | Amount exceeds `MAX_AMOUNT` limit |
 | `1202` | Destination not in whitelist |
 | `1203` | Destination is blacklisted |
@@ -89,13 +89,13 @@ When a `REQUIRE_APPROVAL` policy triggers:
 
 <CardGroup cols={2}>
   <Card title="Defense in depth" icon="layer-group">
-    Combine multiple rule types — use MAX_AMOUNT AND WHITELIST AND DAILY_LIMIT together.
+    Combine multiple rule types. Use MAX_AMOUNT AND WHITELIST AND DAILY_LIMIT together.
   </Card>
   <Card title="Start permissive" icon="unlock">
     Begin with high limits and tighten as you understand your transaction patterns.
   </Card>
   <Card title="Monitor violations" icon="chart-line">
-    Policy violations emit webhook events — monitor them for suspicious activity.
+    Policy violations emit webhook events. Monitor them for suspicious activity.
   </Card>
   <Card title="Separate by vault" icon="boxes-stacked">
     Apply stricter policies to hot wallets and relaxed policies to treasury vaults.

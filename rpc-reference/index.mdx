@@ -3,7 +3,7 @@ title: "JSON-RPC reference"
 description: "Connect to a Quantum Chain node and call the qc_* JSON-RPC namespace"
 ---
 
-The Quantum Chain node exposes a standard **JSON-RPC 2.0** interface over HTTP and WebSocket. All methods in the Ethereum `eth_*` namespace are also available under the `qc_*` namespace — the `qc_*` variant is recommended for Quantum Chain integrations.
+The Quantum Chain node exposes a standard **JSON-RPC 2.0** interface over HTTP and WebSocket. All methods in the Ethereum `eth_*` namespace are also available under the `qc_*` namespace. The `qc_*` variant is recommended for Quantum Chain integrations.
 
 <Note>
   Every `qc_*` method has an identical `eth_*` counterpart. If your tooling only supports `eth_*`, it works the same way.
@@ -38,10 +38,10 @@ geth --http --http.api eth,qc,net,web3,txpool --ws --ws.api eth,qc,net,web3
 
 | Namespace | Description |
 |-----------|-------------|
-| `qc` | Quantum Chain native — accounts, blocks, transactions, gas, execution |
+| `qc` | Quantum Chain native: accounts, blocks, transactions, gas, execution |
 | `eth` | Ethereum-compatible alias (identical to `qc`) |
-| `net` | Network info — peer count, version, listening status |
-| `web3` | Utilities — client version, SHA3 |
+| `net` | Network info: peer count, version, listening status |
+| `web3` | Utilities: client version, SHA3 |
 | `txpool` | Transaction pool inspection |
 | `debug` | Debugging and tracing |
 | `admin` | Node administration and peer management |

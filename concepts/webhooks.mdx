@@ -29,7 +29,7 @@ curl -X POST "$BASE_URL/webhooks" \
 ```
 
 <Warning>
-Save the `secret` — it is shown only once. You need it to verify webhook signatures.
+Save the `secret`. It is shown only once. You need it to verify webhook signatures.
 </Warning>
 
 ## Event types
@@ -45,7 +45,7 @@ Save the `secret` — it is shown only once. You need it to verify webhook signa
 | `deposit.confirmed` | Inbound transfer confirmed with sufficient depth |
 | `approval.decision` | An approval or rejection decision was made |
 
-Use `*` wildcards in event subscriptions — `transaction.*` subscribes to all transaction events.
+Use `*` wildcards in event subscriptions. For example, `transaction.*` subscribes to all transaction events.
 
 <Tip>
   Pass an empty `events` array (or omit it) to subscribe to **all** event types.
@@ -192,7 +192,7 @@ curl -X DELETE "$BASE_URL/webhooks/{id}" \
     Return `200 OK` immediately and process the event asynchronously. Slow responses trigger retries.
   </Card>
   <Card title="Handle duplicates" icon="clone">
-    Use the `id` field to deduplicate — retries may deliver the same event multiple times.
+    Use the `id` field to deduplicate. Retries may deliver the same event multiple times.
   </Card>
   <Card title="Verify signatures" icon="shield-check">
     Always validate HMAC-SHA256 before processing. Reject unsigned or invalid deliveries.

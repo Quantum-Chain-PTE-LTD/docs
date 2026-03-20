@@ -5,7 +5,7 @@
 
 ## About this project
 
-- This is the developer documentation for the **Quantum Chain Custody API**
+- This is the developer documentation for **Qustody**, the **Quantum Chain Custody API**
 - Built on [Mintlify](https://mintlify.com) with MDX pages and YAML frontmatter
 - Configuration lives in `docs.json`
 - API reference is auto-generated from `api-reference/openapi.json`
@@ -14,6 +14,7 @@
 
 ## Terminology
 
+- **Qustody** — the product name for the Quantum Chain Custody platform; use "Qustody" in the site header, logo, and first mention per page, then "Custody API" or "the API" for subsequent references
 - **Quantum Chain (QC)** — post-quantum Ethereum fork using proprietary quantum-safe signatures
 - **Vault account** — logical grouping that holds one or more wallets (not "vault" alone)
 - **Wallet** — a single Quantum Chain address within a vault account; holds assets and signs transactions
@@ -37,6 +38,9 @@
 - Always use "Quantum Chain" (two words, capitalized) — never "quantum chain" or "QuantumChain"
 - Prefer "vault account" over "vault" when referring to the container resource
 - Use "post-quantum" or "quantum-safe" when referring to the signature scheme — never name the specific algorithm
+- Never use em dashes (—) in prose; use periods, commas, colons, or parentheses instead. Em dashes are allowed only as table-cell placeholders
+- For definition lists ("**Term** — description"), use "**Term.** Description" or "**Term:** description"
+- Avoid AI-sounding filler: "it's worth noting", "importantly", "notably", "robust", "comprehensive", "seamlessly", "leverage", "cutting-edge", "delve", "myriad"
 
 ## Content boundaries
 

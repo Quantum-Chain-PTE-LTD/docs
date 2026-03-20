@@ -3,15 +3,15 @@ title: "Architecture"
 description: "Non-custodial signing model, transaction lifecycle, and system design"
 ---
 
-The Quantum Chain Custody API is a **non-custodial** orchestration layer. It manages transaction lifecycle, policy enforcement, and event delivery — but never holds private keys.
+The Quantum Chain Custody API is a **non-custodial** orchestration layer. It manages transaction lifecycle, policy enforcement, and event delivery, but never holds private keys.
 
 ## Non-custodial signing model
 
 Unlike traditional custodial solutions, the Custody API delegates all signing to your infrastructure. This means:
 
-- **You control the keys** — post-quantum private keys live in your HSM, secure enclave, or key management system
-- **The API orchestrates** — it creates transactions, enforces policies, and broadcasts signed transactions to the Quantum Chain network
-- **Signing is a callback** — when a transaction needs signing, you retrieve the payload, sign it externally, and submit the signature back
+- **You control the keys.** Post-quantum private keys live in your HSM, secure enclave, or key management system
+- **The API orchestrates.** It creates transactions, enforces policies, and broadcasts signed transactions to the Quantum Chain network
+- **Signing is a callback.** When a transaction needs signing, you retrieve the payload, sign it externally, and submit the signature back
 
 ```mermaid
 graph LR
@@ -82,7 +82,7 @@ A typical transfer follows this sequence:
     Your application calls `POST /v1/transactions` with source, destination, and amount. The API validates the request and runs it through the policy engine.
   </Step>
   <Step title="Policy evaluation">
-    Configured policies are evaluated — spending limits, whitelist/blacklist checks, approval requirements, and time windows. If a policy requires approval, the transaction moves to `PENDING_APPROVAL`.
+    Configured policies are evaluated: spending limits, whitelist/blacklist checks, approval requirements, and time windows. If a policy requires approval, the transaction moves to `PENDING_APPROVAL`.
   </Step>
   <Step title="Retrieve signing payload">
     Call `GET /v1/transactions/{id}/signing_payload` to get the unsigned transaction digest as a hex-encoded byte array.

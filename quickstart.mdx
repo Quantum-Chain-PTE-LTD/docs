@@ -7,8 +7,8 @@ This guide walks you through a complete integration flow: authenticate, create o
 
 ## Prerequisites
 
-- A running Custody API instance — see [Development](/development) for local setup
-- An API key pair — contact the platform team or use the admin CLI
+- A running Custody API instance. See [Development](/development) for local setup
+- An API key pair. Contact the platform team or use the admin CLI
 
 <Note>
 All examples use `http://localhost:8080` as the base URL. Replace with your deployment URL in production.
@@ -100,7 +100,9 @@ curl -s -X POST "$BASE_URL/vault/accounts" \
 
 ## Step 4: Register a wallet
 
-Register an external Quantum Chain wallet address. The custody API does not generate keys — you provide the public key and address from your external signer.
+Register an external Quantum Chain wallet address. The custody API does not generate keys. You provide the public key, address, and an ownership proof from your external signer.
+
+The ownership proof is a post-quantum signature over the deterministic challenge `Keccak256("qustody:register:" + lowercase_address)`.
 
 ```bash
 curl -s -X POST "$BASE_URL/vault/accounts/va_def456/wallets" \
@@ -108,8 +110,9 @@ curl -s -X POST "$BASE_URL/vault/accounts/va_def456/wallets" \
   -H "Content-Type: application/json" \
   -d '{
     "address": "0x1234...abcd",
-    "public_key": "<base64-encoded-public-key>",
-    "name": "Hot Wallet"
+    "publicKey": "<hex-encoded-public-key>",
+    "signature": "<hex-encoded-ownership-signature>",
+    "label": "Hot Wallet"
   }' | jq .
 ```
 

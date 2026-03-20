@@ -1,6 +1,6 @@
 ---
 title: External signing
-description: How to sign transactions with your quantum-safe key — the core integration point.
+description: How to sign transactions with your quantum-safe key. This is the core integration point.
 ---
 
 ## Overview
@@ -150,9 +150,9 @@ After submission, the service:
 
 | Scenario | Response | Next step |
 |----------|----------|-----------|
-| Wrong signature | `400 Bad Request` — signature verification failed | Re-sign with correct key |
-| Wrong public key | `400 Bad Request` — public key mismatch | Use the public key registered with the wallet |
-| Wrong state | `409 Conflict` — transaction not in SIGNING_REQUESTED | Check current status; may already be signed |
+| Wrong signature | `400 Bad Request`, signature verification failed | Re-sign with correct key |
+| Wrong public key | `400 Bad Request`, public key mismatch | Use the public key registered with the wallet |
+| Wrong state | `409 Conflict`, transaction not in SIGNING_REQUESTED | Check current status; may already be signed |
 | Network error on broadcast | Transaction moves to `FAILED` | Create a new transaction (new nonce assigned) |
 | Signing timeout | Transaction moves to `CANCELLED` | Create a new transaction |
 
@@ -176,5 +176,13 @@ After submission, the service:
     2. Listen for the `transaction.status_changed` webhook (status = SIGNING_REQUESTED)
     3. Fetch the signing payload
     4. Sign and submit asynchronously
+  </Accordion>
+  <Accordion title="Wallet ownership proof">
+    When you register a wallet, the API requires a signature proving you
+    control the private key. The challenge is deterministic:
+    `Keccak256("qustody:register:" + lowercase_address)`. Sign this 32-byte
+    digest with your quantum-safe key and include the hex-encoded signature
+    in the registration request. See [Vaults and wallets](/concepts/vaults-wallets)
+    for the full flow.
   </Accordion>
 </AccordionGroup>

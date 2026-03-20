@@ -1,11 +1,11 @@
 ---
 title: Transaction lifecycle
-description: Understand the 12-state transaction machine — from creation through signing, broadcast, and confirmation.
+description: Understand the 12-state transaction machine, from creation through signing, broadcast, and confirmation.
 ---
 
 ## Overview
 
-Every transfer in QC Custody follows a deterministic state machine. Understanding these states is critical for building robust integrations — your system should handle each transition and respond to webhook events accordingly.
+Every transfer in QC Custody follows a deterministic state machine. Understanding these states is critical for reliable integrations. Your system should handle each transition and respond to webhook events accordingly.
 
 ## State machine diagram
 
@@ -45,7 +45,7 @@ stateDiagram-v2
 
 <AccordionGroup>
   <Accordion title="CREATED" icon="circle-plus">
-    Transaction has been created and validated. The service has estimated gas and assigned a nonce. Policy evaluation happens immediately — the transaction automatically transitions to `SIGNING_REQUESTED`, `PENDING_APPROVAL`, or `REJECTED`.
+    Transaction has been created and validated. The service has estimated gas and assigned a nonce. Policy evaluation happens immediately, and the transaction automatically transitions to `SIGNING_REQUESTED`, `PENDING_APPROVAL`, or `REJECTED`.
   </Accordion>
 
   <Accordion title="PENDING_APPROVAL" icon="clock">
@@ -65,7 +65,7 @@ stateDiagram-v2
 
     **Webhook event:** `transaction.status_changed`
 
-    This is the **key integration point** — see the [External signing guide](/guides/external-signing).
+    This is the **key integration point**. See the [External signing guide](/guides/external-signing).
   </Accordion>
 
   <Accordion title="SIGNED" icon="signature">
@@ -105,7 +105,7 @@ stateDiagram-v2
   </Accordion>
 
   <Accordion title="SIGN_FAILED" icon="key">
-    The submitted signature was invalid — wrong key, corrupted signature, or public key mismatch.
+    The submitted signature was invalid: wrong key, corrupted signature, or public key mismatch.
   </Accordion>
 </AccordionGroup>
 
@@ -174,6 +174,6 @@ Common failure reasons:
 |--------|-------|------------|
 | `amount exceeds max` | REJECTED | Lower the amount or adjust the MAX_AMOUNT policy |
 | `destination is blacklisted` | REJECTED | Remove the address from the blacklist policy |
-| `nonce too low` | FAILED | The nonce was already used — retry creates a new nonce |
+| `nonce too low` | FAILED | The nonce was already used. Retry creates a new nonce |
 | `insufficient funds` | FAILED | Fund the source wallet with enough QC for amount + gas |
 | `signature verification failed` | SIGN_FAILED | Verify you're signing the correct hash with the correct key |

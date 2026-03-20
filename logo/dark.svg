@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 30" width="140" height="30">
-  <text x="0" y="23" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" fill="#A78BFA">QC</text>
-  <text x="38" y="23" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="400" fill="#D1D5DB">Custody</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 30" width="160" height="30">
+  <g transform="translate(1,2) scale(0.0734)">
+    <polygon fill="#A78BFA" points="94.41 244.95 63.6 214.14 63.6 66.24 94.41 35.43 259.92 35.43 290.73 66.24 290.73 214.14 260.8 244.07 216.78 200.05 246.71 200.05 246.71 80.33 107.62 80.33 107.62 200.05 130.51 200.05 119.06 188.61 119.06 154.28 163.96 159.56 163.96 171.88 259.04 266.96 248.47 318.9 174.52 244.95 94.41 244.95"/>
+  </g>
+  <text x="30" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" fill="#E0D4FC">Qustody</text>
 </svg>
